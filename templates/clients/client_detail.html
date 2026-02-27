@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{{ client.name }} — LicitaAI{% endblock %}
+
+{% block content %}
+<a href="{% url 'clients:list' %}" class="text-muted small">&larr; Voltar</a>
+<div class="d-flex justify-content-between align-items-center mt-2 mb-4">
+  <h4 class="mb-0">{{ client.name }}</h4>
+  <a href="{% url 'clients:edit' client.pk %}" class="btn btn-outline-primary btn-sm">Editar</a>
+</div>
+
+<div class="row g-4">
+  <!-- Perfil -->
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header fw-semibold">Perfil</div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <tr><td class="fw-semibold" style="width:150px">CNPJ</td><td>{{ client.cnpj }}</td></tr>
+          <tr><td class="fw-semibold">E-mail</td><td>{{ client.email|default:"—" }}</td></tr>
+          <tr><td class="fw-semibold">Telefone</td><td>{{ client.phone|default:"—" }}</td></tr>
+          <tr><td class="fw-semibold">UFs</td><td>{{ client.regions|join:", "|default:"—" }}</td></tr>
+          <tr><td class="fw-semibold">Palavras-chave</td><td>{{ client.keywords|join:", "|default:"—" }}</td></tr>
+          <tr><td class="fw-semibold">Categorias</td><td>{{ client.categories|join:", "|default:"—" }}</td></tr>
+          <tr><td class="fw-semibold">Margem min.</td><td>{{ client.min_margin_pct }}%</td></tr>
+          <tr><td class="fw-semibold">Valor max.</td><td>{% if client.max_value %}R$ {{ client.max_value|floatformat:2 }}{% else %}Sem limite{% endif %}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documentos -->
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header fw-semibold d-flex justify-content-between">
+        Documentos
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#addDocForm">+ Adicionar</button>
+      </div>
+      <div class="card-body">
+        <!-- Form collapse -->
+        <div class="collapse mb-3" id="addDocForm">
+          <form method="post" action="{% url 'clients:add_document' client.pk %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-2">
+              <div class="col-md-4">{{ doc_form.doc_type|add_class:"form-select form-select-sm" }}</div>
+              <div class="col-md-4">{{ doc_form.expires_at|add_class:"form-control form-control-sm" }}</div>
+              <div class="col-md-4">{{ doc_form.status|add_class:"form-select form-select-sm" }}</div>
+              <div class="col-md-8">{{ doc_form.file|add_class:"form-control form-control-sm" }}</div>
+              <div class="col-md-4"><button type="submit" class="btn btn-primary btn-sm w-100">Salvar</button></div>
+            </div>
+          </form>
+          <hr>
+        </div>
+
+        <table class="table table-sm mb-0">
+          <thead><tr><th>Tipo</th><th>Validade</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for doc in documents %}
+            <tr>
+              <td>{{ doc.get_doc_type_display }}</td>
+              <td>{{ doc.expires_at|date:"d/m/Y"|default:"—" }}</td>
+              <td><span class="badge bg-{% if doc.status == 'valid' %}success{% elif doc.status == 'expiring' %}warning{% elif doc.status == 'expired' %}danger{% else %}secondary{% endif %}">{{ doc.get_status_display }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-muted">Nenhum documento.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Matches -->
+  {% if matches %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header fw-semibold">Matches Recentes</div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <thead><tr><th>Oportunidade</th><th>Score</th><th>Data</th></tr></thead>
+          <tbody>
+            {% for m in matches %}
+            <tr>
+              <td><a href="{% url 'opportunities:detail' m.opportunity.pk %}">{{ m.opportunity.title|truncatewords:12 }}</a></td>
+              <td><span class="{% if m.score >= 70 %}score-high{% elif m.score >= 40 %}score-mid{% else %}score-low{% endif %}">{{ m.score }}/100</span></td>
+              <td>{{ m.created_at|date:"d/m/Y" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{# KPI cards grid — included by detail + pdf #}
+<div class="kpi-grid">
+  {% for kpi in kpi_cards %}
+  <div class="kpi-card" style="--kpi-color:{{ kpi.color }}">
+    <i class="bi {{ kpi.icon }} kpi-icon"></i>
+    <div>
+      <div class="kpi-title">{{ kpi.title }}</div>
+      <div class="kpi-value">{{ kpi.value }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>

@@ -1,0 +1,91 @@
+{
+  "resumo": "Aquisição de licenças de software para uso corporativo do órgão federal, incluindo sistema operacional Windows e pacote Office.",
+  "checklist_habilitacao": {
+    "fiscal": [
+      {
+        "requisito": "Certidão Negativa de Débitos (CND) Federal",
+        "evidencia": {
+          "fonte": "documento",
+          "trecho": "apresentar certidão negativa de débitos relativos a tributos federais",
+          "pagina": 12,
+          "confianca": 0.95
+        }
+      },
+      {
+        "requisito": "Certificado de Regularidade do FGTS (CRF)",
+        "evidencia": {
+          "fonte": "documento",
+          "trecho": "comprovar regularidade junto ao FGTS",
+          "pagina": 12,
+          "confianca": 0.95
+        }
+      }
+    ],
+    "juridica": [
+      {
+        "requisito": "Contrato Social ou Estatuto",
+        "evidencia": {
+          "fonte": "documento",
+          "trecho": "registro comercial no caso de empresa individual ou contrato social",
+          "pagina": 11,
+          "confianca": 0.9
+        }
+      }
+    ],
+    "tecnica": [
+      {
+        "requisito": "Atestado de capacidade técnica para fornecimento de licenças de software",
+        "evidencia": {
+          "fonte": "documento",
+          "trecho": "apresentar atestado(s) de capacidade técnica comprovando fornecimento similar",
+          "pagina": 15,
+          "confianca": 0.9
+        }
+      }
+    ],
+    "economica": [
+      {
+        "requisito": "Balanço patrimonial do último exercício",
+        "evidencia": {
+          "fonte": "documento",
+          "trecho": "balanço patrimonial e demonstrações contábeis do último exercício social",
+          "pagina": 14,
+          "confianca": 0.85
+        }
+      }
+    ]
+  },
+  "riscos": [
+    {
+      "tipo": "prazo_curto",
+      "descricao": "Prazo de entrega de 15 dias corridos, potencialmente insuficiente para itens importados.",
+      "severidade": "media",
+      "evidencia": {
+        "fonte": "documento",
+        "trecho": "prazo de entrega: 15 (quinze) dias corridos",
+        "pagina": 8,
+        "confianca": 0.95
+      }
+    },
+    {
+      "tipo": "garantia",
+      "descricao": "Exigência de garantia de proposta de 1% do valor estimado.",
+      "severidade": "baixa",
+      "evidencia": {
+        "fonte": "documento",
+        "trecho": "garantia de proposta correspondente a 1% do valor total estimado",
+        "pagina": 6,
+        "confianca": 0.9
+      }
+    }
+  ],
+  "campos_extraidos": {
+    "prazo_entrega": "15 dias corridos",
+    "garantia_proposta": "1% do valor estimado",
+    "garantia_contratual": "5% do valor do contrato",
+    "condicoes_pagamento": "30 dias após entrega e aceite",
+    "subcontratacao": "NÃO ENCONTRADO",
+    "visita_tecnica": "NÃO ENCONTRADO",
+    "amostra_exigida": "NÃO ENCONTRADO"
+  }
+}

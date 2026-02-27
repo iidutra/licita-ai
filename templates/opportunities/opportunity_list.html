@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Oportunidades — LicitaAI{% endblock %}
+
+{% block content %}
+{# --- Page header --- #}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="mb-0 fw-bold">Oportunidades</h5>
+  </div>
+  <div class="d-flex gap-2 align-items-center">
+    <span class="fs-xs text-muted">
+      <strong>{{ total_count }}</strong> total
+      <span class="mx-1">&middot;</span>
+      <strong>{{ new_count }}</strong> novas
+    </span>
+  </div>
+</div>
+
+{# --- Filters (partial) --- #}
+{% include "opportunities/_filters.html" %}
+
+{# --- Desktop table (hidden on mobile) --- #}
+<div class="la-card d-none d-md-block">
+  <div class="table-responsive">
+    <table class="la-table">
+      <thead>
+        <tr>
+          <th class="col-obj">Objeto</th>
+          <th>UF</th>
+          <th>Valor Est.</th>
+          <th>Prazo</th>
+          <th>Status</th>
+          <th>Fonte</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for opp in opportunities %}
+        <tr onclick="location.href='{% url 'opportunities:detail' opp.pk %}'" tabindex="0"
+            onkeydown="if(event.key==='Enter')this.click()">
+          <td class="col-obj">
+            <a href="{% url 'opportunities:detail' opp.pk %}" class="obj-title" title="{{ opp.title }}">
+              {{ opp.title|truncatewords:18 }}
+            </a>
+            <div class="obj-sub">{{ opp.entity_name|truncatewords:8 }}{% if opp.get_modality_display and opp.modality != 'other' %} &middot; {{ opp.get_modality_display }}{% endif %}</div>
+          </td>
+          <td>
+            {% if opp.entity_uf %}<span class="chip chip-secondary">{{ opp.entity_uf }}</span>{% else %}&mdash;{% endif %}
+          </td>
+          <td class="col-value">
+            {% if opp.estimated_value %}R$ {{ opp.estimated_value|floatformat:0 }}{% else %}&mdash;{% endif %}
+          </td>
+          <td class="col-date">
+            {% if opp.deadline %}{{ opp.deadline|date:"d/m/Y" }}<br><span class="fs-xs text-muted">{{ opp.deadline|date:"H:i" }}</span>{% else %}&mdash;{% endif %}
+          </td>
+          <td><span class="badge badge-{{ opp.status }}">{{ opp.get_status_display }}</span></td>
+          <td><span class="chip chip-secondary">{{ opp.get_source_display }}</span></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="bi bi-inbox d-block"></i>
+              <p>Nenhuma oportunidade encontrada.</p>
+              {% if active_filters %}
+              <a href="{% url 'opportunities:list' %}" class="btn btn-outline-primary btn-sm">Limpar filtros</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# --- Mobile cards (shown < md) --- #}
+<div class="d-md-none">
+  {% for opp in opportunities %}
+  <a href="{% url 'opportunities:detail' opp.pk %}" class="opp-card">
+    <div class="opp-card-title">{{ opp.title|truncatewords:15 }}</div>
+    <div class="opp-card-meta">
+      {{ opp.entity_name|truncatewords:6 }}
+      {% if opp.entity_uf %}&middot; {{ opp.entity_uf }}{% endif %}
+      {% if opp.get_modality_display and opp.modality != 'other' %}&middot; {{ opp.get_modality_display }}{% endif %}
+    </div>
+    <div class="opp-card-row">
+      <span class="opp-card-value">
+        {% if opp.estimated_value %}R$ {{ opp.estimated_value|floatformat:0 }}{% else %}&mdash;{% endif %}
+      </span>
+      <span class="col-date fs-xs">
+        {% if opp.deadline %}{{ opp.deadline|date:"d/m/Y H:i" }}{% else %}&mdash;{% endif %}
+      </span>
+      <span class="badge badge-{{ opp.status }}">{{ opp.get_status_display }}</span>
+    </div>
+  </a>
+  {% empty %}
+  <div class="empty-state">
+    <i class="bi bi-inbox d-block"></i>
+    <p>Nenhuma oportunidade encontrada.</p>
+    {% if active_filters %}
+    <a href="{% url 'opportunities:list' %}" class="btn btn-outline-primary btn-sm">Limpar filtros</a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{# --- Pagination --- #}
+{% if is_paginated %}
+<nav class="mt-3" aria-label="Paginacao">
+  <ul class="pagination pagination-sm justify-content-center la-pagination">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?{{ filter_query }}&page={{ page_obj.previous_page_number }}" aria-label="Anterior">&laquo;</a>
+    </li>
+    {% endif %}
+
+    {% for p in page_obj.paginator.page_range %}
+      {% if p == page_obj.number %}
+      <li class="page-item active" aria-current="page"><span class="page-link">{{ p }}</span></li>
+      {% elif p == 1 or p == page_obj.paginator.num_pages or p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+      <li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ p }}">{{ p }}</a></li>
+      {% elif p == page_obj.number|add:"-3" or p == page_obj.number|add:"3" %}
+      <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="?{{ filter_query }}&page={{ page_obj.next_page_number }}" aria-label="Proxima">&raquo;</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{
+  "score": 72,
+  "justificativa": "A empresa possui experiência comprovada em fornecimento de software e atende à maioria dos requisitos de habilitação. Ponto de atenção: não possui atestado técnico específico para licenciamento de volume.",
+  "componentes_score": {
+    "compatibilidade_objeto": {"score": 85, "motivo": "Palavras-chave do cliente (software, TI) alinham com o objeto da licitação."},
+    "cobertura_geografica": {"score": 90, "motivo": "Cliente atende DF e possui logística nacional."},
+    "documentacao": {"score": 60, "motivo": "CND Federal válida; faltam CNDT e balanço patrimonial atualizado."},
+    "capacidade_tecnica": {"score": 55, "motivo": "Possui experiência em software, mas sem atestado específico para licenciamento de volume."},
+    "viabilidade_financeira": {"score": 70, "motivo": "Valor estimado (R$ 150.000) dentro do limite. Margem potencial acima do mínimo exigido."}
+  },
+  "documentos_faltantes": [
+    {"tipo": "cndt", "motivo": "CNDT (Certidão Negativa de Débitos Trabalhistas) não encontrada", "impacto": "impeditivo"},
+    {"tipo": "balanco", "motivo": "Balanço patrimonial do último exercício não disponível", "impacto": "impeditivo"},
+    {"tipo": "atestado_tecnico", "motivo": "Atestado específico para licenciamento de software em volume", "impacto": "desejavel"}
+  ],
+  "competencias_faltantes": [
+    {"competencia": "Parceria/revenda autorizada Microsoft", "motivo": "Edital pode exigir comprovação de canal autorizado"}
+  ],
+  "evidencias": [
+    {"aspecto": "Objeto compatível", "fonte": "edital", "trecho": "Aquisição de licenças de software", "confianca": 0.95},
+    {"aspecto": "UF compatível", "fonte": "cliente", "trecho": "Regiões de atuação: SP, RJ", "confianca": 0.6}
+  ]
+}

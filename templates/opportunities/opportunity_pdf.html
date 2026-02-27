@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ opp.title|truncatewords:8 }} — LicitaAI</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:10.5pt;color:#1e293b;padding:1.5cm;line-height:1.55;}
+    .header{border-bottom:3px solid #2563eb;padding-bottom:.8rem;margin-bottom:1.2rem;}
+    .header h1{font-size:1.2rem;font-weight:700;margin-bottom:.15rem;}
+    .brand{float:right;font-weight:700;color:#2563eb;font-size:1rem;}
+    .meta{font-size:.75rem;color:#64748b;}
+    .chips span{display:inline-block;padding:.08rem .4rem;border-radius:3px;font-size:.65rem;font-weight:600;background:#e2e8f0;color:#475569;margin-right:.25rem;}
+    .gonogo{display:inline-block;padding:.1rem .5rem;border-radius:3px;font-weight:700;font-size:.7rem;}
+    .gonogo.go{background:#d1fae5;color:#065f46;}.gonogo.go_ressalvas{background:#fef3c7;color:#92400e;}.gonogo.nogo{background:#fee2e2;color:#991b1b;}
+    .kpis{display:flex;gap:.8rem;margin-bottom:1.2rem;}
+    .kpi{flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:.6rem;border-left:4px solid var(--c,#6b7280);}
+    .kpi .lbl{font-size:.6rem;text-transform:uppercase;color:#6b7280;letter-spacing:.04em;}
+    .kpi .val{font-size:1rem;font-weight:700;}
+    .section{margin-bottom:1.2rem;page-break-inside:avoid;}
+    .section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#475569;border-bottom:1px solid #e2e8f0;padding-bottom:.2rem;margin-bottom:.5rem;}
+    table{width:100%;border-collapse:collapse;font-size:.8rem;}
+    table th,table td{padding:.3rem .4rem;border-bottom:1px solid #e2e8f0;text-align:left;}
+    table th{font-weight:600;color:#475569;background:#f8fafc;}
+    .risk{padding:.5rem .65rem;border-radius:4px;margin-bottom:.4rem;border-left:4px solid;page-break-inside:avoid;}
+    .risk.alta{background:#fef2f2;border-color:#dc2626;}.risk.media{background:#fffbeb;border-color:#d97706;}.risk.baixa{background:#eff6ff;border-color:#3b82f6;}
+    .risk strong{font-size:.75rem;}.risk p{font-size:.75rem;margin-top:.15rem;}
+    .risk .ev{font-size:.7rem;font-style:italic;color:#64748b;}
+    .chk-group{font-size:.7rem;font-weight:700;text-transform:uppercase;color:#475569;margin-top:.6rem;margin-bottom:.2rem;}
+    .chk-item{font-size:.75rem;padding:.15rem 0 .15rem 1.1rem;position:relative;}
+    .chk-item::before{content:"\2610";position:absolute;left:0;}
+    .chk-mand{color:#dc2626;font-size:.6rem;font-weight:700;}
+    .ai-html{font-size:.8rem;line-height:1.55;}
+    .ai-html h2,.ai-html h3{font-size:.9rem;font-weight:700;margin-top:.6rem;margin-bottom:.15rem;}
+    .ai-html ul,.ai-html ol{padding-left:1.2rem;margin-bottom:.3rem;}
+    .ai-html p{margin-bottom:.3rem;}
+    .footer{margin-top:1.5rem;padding-top:.4rem;border-top:1px solid #e2e8f0;font-size:.65rem;color:#94a3b8;text-align:center;}
+    @media print{body{padding:.5cm;}.no-print{display:none!important;}}
+  </style>
+</head>
+<body>
+
+<div class="no-print" style="margin-bottom:.8rem;text-align:right;">
+  <button onclick="window.print()" style="padding:.35rem .8rem;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:.85rem;">Imprimir / Salvar PDF</button>
+  <button onclick="window.close()" style="padding:.35rem .8rem;background:#e2e8f0;color:#475569;border:none;border-radius:4px;cursor:pointer;margin-left:.4rem;font-size:.85rem;">Fechar</button>
+</div>
+
+{# Header #}
+<div class="header">
+  <span class="brand">LicitaAI</span>
+  <h1>{{ opp.title }}</h1>
+  <div class="chips">
+    {% for chip in smart_chips %}<span>{{ chip.label }}</span>{% endfor %}
+    {% if go_nogo %}<span class="gonogo {{ go_nogo }}">{% if go_nogo == 'go' %}GO{% elif go_nogo == 'go_ressalvas' %}GO COM RESSALVAS{% else %}NO-GO{% endif %}</span>{% endif %}
+  </div>
+  <div class="meta">
+    {{ opp.entity_name }}{% if opp.entity_city %}, {{ opp.entity_city }}{% endif %}{% if opp.entity_uf %} ({{ opp.entity_uf }}){% endif %}
+    | {{ opp.get_source_display }}
+    {% if opp.deadline %}| Prazo: {{ opp.deadline|date:"d/m/Y H:i" }}{% endif %}
+  </div>
+</div>
+
+{# KPIs #}
+<div class="kpis">
+  {% for kpi in kpi_cards %}
+  <div class="kpi" style="--c:{{ kpi.color }}"><div class="lbl">{{ kpi.title }}</div><div class="val">{{ kpi.value }}</div></div>
+  {% endfor %}
+</div>
+
+{# Dados do Edital #}
+<div class="section">
+  <div class="section-title">Dados do Edital</div>
+  <table>
+    <tr><td style="width:140px;font-weight:600;">Modalidade</td><td>{{ opp.get_modality_display }}</td></tr>
+    <tr><td style="font-weight:600;">Numero</td><td>{{ opp.number|default:"\u2014" }}</td></tr>
+    <tr><td style="font-weight:600;">Processo</td><td>{{ opp.process_number|default:"\u2014" }}</td></tr>
+    <tr><td style="font-weight:600;">CNPJ</td><td>{{ opp.entity_cnpj }}</td></tr>
+    <tr><td style="font-weight:600;">Publicacao</td><td>{{ opp.published_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+    <tr><td style="font-weight:600;">Abertura</td><td>{{ opp.proposals_open_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+    <tr><td style="font-weight:600;">Encerramento</td><td>{{ opp.proposals_close_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+    <tr><td style="font-weight:600;">Prazo Final</td><td>{{ opp.deadline|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+  </table>
+</div>
+
+{# AI Summary #}
+{% if summary_sections %}
+<div class="section">
+  <div class="section-title">Resumo Executivo (IA)</div>
+  <div class="ai-html">
+    {% for section in summary_sections %}
+    <h3>{{ section.title }}</h3>
+    {{ section.html|safe }}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# Risks #}
+{% if risks %}
+<div class="section">
+  <div class="section-title">Riscos Identificados</div>
+  {% for risk in risks %}
+  <div class="risk {{ risk.severidade }}">
+    <strong>{{ risk.tipo|upper }} ({{ risk.severidade }})</strong>
+    <p>{{ risk.descricao }}</p>
+    {% if risk.evidencia.trecho %}<div class="ev">"{{ risk.evidencia.trecho|truncatewords:40 }}"</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# Checklist #}
+{% if checklist_groups %}
+<div class="section">
+  <div class="section-title">Checklist de Requisitos</div>
+  {% for group in checklist_groups %}
+  <div class="chk-group">{{ group.category }}</div>
+  {% for item in group.items %}
+  <div class="chk-item">{{ item.text }}{% if item.mandatory %} <span class="chk-mand">(obrigatorio)</span>{% endif %}</div>
+  {% endfor %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{# Items #}
+{% if items %}
+<div class="section">
+  <div class="section-title">Itens da Licitacao</div>
+  <table>
+    <thead><tr><th>#</th><th>Descricao</th><th>Qtde</th><th>Unid.</th><th style="text-align:right">P. Unit.</th><th style="text-align:right">Total</th></tr></thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.item_number }}</td>
+        <td>{{ item.description|truncatewords:25 }}</td>
+        <td>{{ item.quantity|default:"\u2014" }}</td>
+        <td>{{ item.unit }}</td>
+        <td style="text-align:right">{% if item.estimated_unit_price %}R$ {{ item.estimated_unit_price|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
+        <td style="text-align:right">{% if item.estimated_total %}R$ {{ item.estimated_total|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{# Matches #}
+{% if matches %}
+<div class="section">
+  <div class="section-title">Matching com Clientes</div>
+  <table>
+    <thead><tr><th>Cliente</th><th>Score</th><th>Justificativa</th></tr></thead>
+    <tbody>
+      {% for m in matches %}
+      <tr><td>{{ m.client.name }}</td><td>{{ m.score }}/100</td><td>{{ m.justification|truncatewords:30 }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="footer">Gerado por LicitaAI em {% now "d/m/Y H:i" %}</div>
+
+</body>
+</html>

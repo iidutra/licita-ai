@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Novo{% endif %} Cliente — LicitaAI{% endblock %}
+
+{% block content %}
+<a href="{% url 'clients:list' %}" class="text-muted small">&larr; Voltar</a>
+<h4 class="mt-2 mb-4">{% if form.instance.pk %}Editar Cliente{% else %}Novo Cliente{% endif %}</h4>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="row g-3">
+        {# CNPJ first — triggers auto-fill #}
+        <div class="col-md-3">
+          <label class="form-label">CNPJ *</label>
+          <div class="input-group">
+            {{ form.cnpj|add_class:"form-control"|attr:"data-cnpj-input" }}
+            <button class="btn btn-outline-secondary" type="button" id="btn-cnpj-lookup" title="Buscar dados do CNPJ">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+          <div id="cnpj-feedback" class="form-text" style="display:none;"></div>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Razao Social *</label>
+          {{ form.name|add_class:"form-control" }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Nome Fantasia</label>
+          {{ form.trade_name|add_class:"form-control" }}
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">E-mail</label>
+          {{ form.email|add_class:"form-control" }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Telefone</label>
+          {{ form.phone|add_class:"form-control" }}
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Margem min. (%)</label>
+          {{ form.min_margin_pct|add_class:"form-control" }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Valor max. contrato</label>
+          {{ form.max_value|add_class:"form-control" }}
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">{{ form.regions_input.label }}</label>
+          {{ form.regions_input|add_class:"form-control" }}
+          <small class="text-muted">{{ form.regions_input.help_text }}</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ form.keywords_input.label }}</label>
+          {{ form.keywords_input|add_class:"form-control" }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ form.categories_input.label }}</label>
+          {{ form.categories_input|add_class:"form-control" }}
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Restricoes</label>
+          {{ form.restrictions|add_class:"form-control" }}
+        </div>
+
+        <div class="col-md-4">
+          <div class="form-check">
+            {{ form.is_active }} <label class="form-check-label">Ativo</label>
+          </div>
+          <div class="form-check">
+            {{ form.notify_email }} <label class="form-check-label">Notificar por e-mail</label>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Webhook URL</label>
+          {{ form.webhook_url|add_class:"form-control" }}
+        </div>
+      </div>
+
+      {% if form.errors %}
+      <div class="alert alert-danger mt-3">
+        {% for field, errors in form.errors.items %}
+          <strong>{{ field }}:</strong> {{ errors|join:", " }}<br>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a href="{% url 'clients:list' %}" class="btn btn-outline-secondary ms-2">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function() {
+  var LOOKUP_URL = "{% url 'clients:cnpj_lookup' %}";
+
+  var cnpjInput = document.querySelector("[data-cnpj-input]");
+  var lookupBtn = document.getElementById("btn-cnpj-lookup");
+  var feedback  = document.getElementById("cnpj-feedback");
+
+  if (!cnpjInput || !lookupBtn) return;
+
+  // ── CNPJ mask: XX.XXX.XXX/XXXX-XX ──
+  cnpjInput.addEventListener("input", function() {
+    var v = cnpjInput.value.replace(/\D/g, "").slice(0, 14);
+    if (v.length > 12)      v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, "$1.$2.$3/$4-$5");
+    else if (v.length > 8)  v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, "$1.$2.$3/$4");
+    else if (v.length > 5)  v = v.replace(/^(\d{2})(\d{3})(\d{0,3})/, "$1.$2.$3");
+    else if (v.length > 2)  v = v.replace(/^(\d{2})(\d{0,3})/, "$1.$2");
+    cnpjInput.value = v;
+  });
+
+  // ── Auto-trigger on 14 digits ──
+  var autoTriggered = false;
+  cnpjInput.addEventListener("input", function() {
+    var digits = cnpjInput.value.replace(/\D/g, "");
+    if (digits.length === 14 && !autoTriggered) {
+      autoTriggered = true;
+      doLookup();
+    }
+    if (digits.length < 14) autoTriggered = false;
+  });
+
+  lookupBtn.addEventListener("click", doLookup);
+
+  function showFeedback(msg, type) {
+    feedback.style.display = "block";
+    feedback.className = "form-text text-" + type;
+    feedback.textContent = msg;
+  }
+
+  function doLookup() {
+    var digits = cnpjInput.value.replace(/\D/g, "");
+    if (digits.length !== 14) {
+      showFeedback("CNPJ deve ter 14 digitos", "danger");
+      return;
+    }
+
+    lookupBtn.disabled = true;
+    lookupBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    showFeedback("Consultando Receita Federal...", "muted");
+
+    fetch(LOOKUP_URL + "?cnpj=" + digits)
+      .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+      .then(function(res) {
+        if (!res.ok) {
+          showFeedback(res.data.error || "Erro na consulta", "danger");
+          return;
+        }
+        var d = res.data;
+
+        // Fill fields (only if empty or user confirms)
+        var nameField  = document.getElementById("id_name");
+        var tradeField = document.getElementById("id_trade_name");
+        var emailField = document.getElementById("id_email");
+        var phoneField = document.getElementById("id_phone");
+
+        if (nameField && !nameField.value)  nameField.value = d.razao_social;
+        if (tradeField && !tradeField.value) tradeField.value = d.nome_fantasia || "";
+        if (emailField && !emailField.value && d.email) emailField.value = d.email;
+        if (phoneField && !phoneField.value && d.telefone) {
+          // Format DDD+phone
+          var tel = d.telefone.replace(/\D/g, "");
+          if (tel.length >= 10) {
+            phoneField.value = "(" + tel.slice(0,2) + ") " + tel.slice(2);
+          }
+        }
+
+        // Highlight filled fields briefly
+        [nameField, tradeField, emailField, phoneField].forEach(function(f) {
+          if (f && f.value) {
+            f.classList.add("is-valid");
+            setTimeout(function() { f.classList.remove("is-valid"); }, 3000);
+          }
+        });
+
+        var info = d.razao_social;
+        if (d.situacao) info += " — " + d.situacao;
+        if (d.municipio && d.uf) info += " — " + d.municipio + "/" + d.uf;
+        showFeedback(info, "success");
+      })
+      .catch(function() {
+        showFeedback("Falha na conexao. Tente novamente.", "danger");
+      })
+      .finally(function() {
+        lookupBtn.disabled = false;
+        lookupBtn.innerHTML = '<i class="bi bi-search"></i>';
+      });
+  }
+})();
+</script>
+{% endblock %}

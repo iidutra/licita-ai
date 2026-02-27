@@ -1,0 +1,47 @@
+{# AI Summary component — server-rendered HTML, no JS dependency #}
+
+{% if summary_sections %}
+<div class="la-section">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="la-section-title mb-0">Resumo Executivo (IA)</div>
+    <button id="btn-copy-summary" class="btn btn-outline-secondary btn-sm py-0 px-2 no-print" style="font-size:.7rem;" type="button">
+      <i class="bi bi-clipboard me-1"></i>Copiar
+    </button>
+  </div>
+
+  <div id="ai-summary-content" class="ai-html">
+    {# First section always visible #}
+    {% for section in summary_sections %}
+      {% if forloop.first %}
+        {{ section.html|safe }}
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {# Remaining sections collapsible #}
+  {% if summary_sections|length > 1 %}
+  <div class="collapse" id="summaryFull">
+    <div class="ai-html mt-2">
+      {% for section in summary_sections %}
+        {% if not forloop.first %}
+          <h3>{{ section.title }}</h3>
+          {{ section.html|safe }}
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  <button class="btn btn-link btn-sm text-decoration-none p-0 mt-2 collapse-toggle no-print"
+          data-bs-toggle="collapse" data-bs-target="#summaryFull"
+          aria-expanded="false" aria-controls="summaryFull">
+    <i class="bi bi-chevron-down me-1"></i>Ver analise completa
+  </button>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if resumo_html and not summary_sections %}
+<div class="la-section">
+  <div class="la-section-title">Analise IA</div>
+  <div class="ai-html">{{ resumo_html|safe }}</div>
+</div>
+{% endif %}
