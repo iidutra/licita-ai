@@ -9,7 +9,7 @@ import environ
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env()
-env.read_env(BASE_DIR / ".env")
+env.read_env(BASE_DIR / ".env", overwrite=False)
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="insecure-change-me")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
@@ -85,6 +85,8 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Accepts DATABASE_URL (Railway) or individual POSTGRES_* vars (local Docker)
 if env("DATABASE_URL", default=""):
     DATABASES = {"default": env.db("DATABASE_URL")}
+    # django-environ defaults to psycopg2 engine; force psycopg3
+    DATABASES["default"]["ENGINE"] = "django.db.backends.postgresql"
 else:
     DATABASES = {
         "default": {
