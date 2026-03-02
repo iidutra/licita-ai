@@ -76,8 +76,16 @@
           <div class="form-check">
             {{ form.notify_email }} <label class="form-check-label">Notificar por e-mail</label>
           </div>
+          <div class="form-check">
+            {{ form.notify_whatsapp }} <label class="form-check-label">Notificar por WhatsApp</label>
+          </div>
         </div>
-        <div class="col-md-8">
+        <div class="col-md-4">
+          <label class="form-label">WhatsApp</label>
+          {{ form.whatsapp_phone|add_class:"form-control"|attr:"placeholder:5511999999999" }}
+          <small class="text-muted">DDI+DDD+numero</small>
+        </div>
+        <div class="col-md-4">
           <label class="form-label">Webhook URL</label>
           {{ form.webhook_url|add_class:"form-control" }}
         </div>

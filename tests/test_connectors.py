@@ -18,8 +18,10 @@ MOCK_PNCP_RESPONSE = {
             "orgaoEntidade": {
                 "cnpj": "00394460000141",
                 "razaoSocial": "Ministério da Economia",
-                "uf": "DF",
-                "municipio": {"nomeIbge": "Brasília"},
+            },
+            "unidadeOrgao": {
+                "ufSigla": "DF",
+                "municipioNome": "Brasília",
             },
             "anoCompra": "2024",
             "sequencialCompra": "00001",
@@ -47,6 +49,7 @@ class TestPNCPConnector:
         results = connector.fetch_opportunities(
             date_from=date(2024, 1, 1),
             date_to=date(2024, 1, 31),
+            modalities=[6],  # single modality to avoid duplicates from mock
         )
 
         assert len(results) == 1
@@ -66,6 +69,7 @@ class TestPNCPConnector:
             date_from=date(2024, 1, 1),
             date_to=date(2024, 1, 31),
             keyword="equipamentos",
+            modalities=[6],
         )
         assert len(results) == 1
 
@@ -73,6 +77,7 @@ class TestPNCPConnector:
             date_from=date(2024, 1, 1),
             date_to=date(2024, 1, 31),
             keyword="xyznotfound",
+            modalities=[6],
         )
         assert len(results) == 0
 

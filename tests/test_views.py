@@ -37,5 +37,6 @@ class TestClientViews:
             "regions_input": "SP, MG",
             "keywords_input": "teste, software",
             "categories_input": "TI",
+            "min_margin_pct": "0",
         })
         assert resp.status_code == 302  # redirect on success

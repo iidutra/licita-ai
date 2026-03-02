@@ -14,10 +14,17 @@ class EventNotification(TimeStampedModel):
         AI_COMPLETE = "ai_complete", "Análise IA concluída"
         DOCUMENT_READY = "document_ready", "Documento processado"
         INGESTION_ERROR = "ingestion_error", "Erro de ingestão"
+        PREGAO_STATUS_CHANGE = "pregao_status_change", "Mudança de Status do Pregão"
+        PREGAO_NEW_DOCUMENT = "pregao_new_document", "Novo Documento no Pregão"
+        PREGAO_RESULT = "pregao_result", "Resultado do Pregão"
+        PROPOSALS_OPENING = "proposals_opening", "Abertura de Propostas"
+        SESSION_TODAY = "session_today", "Sessão Pública Hoje"
+        SESSION_IMMINENT = "session_imminent", "Sessão Pública em Minutos"
 
     class Channel(models.TextChoices):
         EMAIL = "email", "E-mail"
         WEBHOOK = "webhook", "Webhook"
+        WHATSAPP = "whatsapp", "WhatsApp"
         INTERNAL = "internal", "Interno (dashboard)"
 
     class DeliveryStatus(models.TextChoices):

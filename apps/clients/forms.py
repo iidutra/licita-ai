@@ -29,7 +29,7 @@ class ClientForm(forms.ModelForm):
         fields = [
             "name", "cnpj", "trade_name", "email", "phone",
             "min_margin_pct", "max_value", "restrictions",
-            "is_active", "notify_email", "webhook_url",
+            "is_active", "notify_email", "notify_whatsapp", "whatsapp_phone", "webhook_url",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -43,6 +43,17 @@ class ClientForm(forms.ModelForm):
         raw = self.cleaned_data.get(field_name, "")
         return [v.strip().upper() if "region" in field_name else v.strip()
                 for v in raw.split(",") if v.strip()]
+
+    def clean_whatsapp_phone(self):
+        raw = self.cleaned_data.get("whatsapp_phone", "")
+        if not raw:
+            return ""
+        digits = "".join(c for c in raw if c.isdigit())
+        if len(digits) < 12 or len(digits) > 15:
+            raise forms.ValidationError(
+                "Informe entre 12 e 15 dígitos (DDI+DDD+número). Ex: 5511999999999"
+            )
+        return digits
 
     def save(self, commit=True):
         instance = super().save(commit=False)

@@ -6,6 +6,13 @@ Endpoints reais (Swagger: https://pncp.gov.br/api/pncp/swagger-ui/index.html):
 - GET /v1/orgaos/{cnpj}/compras/{anoCompra}/{sequencialCompra}/itens
 - GET /v1/orgaos/{cnpj}/compras/{anoCompra}/{sequencialCompra}/arquivos
 
+Endpoints de monitoramento (API CONSULTA):
+- GET /v1/contratacoes/atualizacao?dataInicial=yyyyMMdd&dataFinal=yyyyMMdd
+- GET /v1/orgaos/{cnpj}/compras/{ano}/{seq} (detalhe)
+- GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens/{item}/resultados
+- GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}/atas
+- GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}/arquivos (sem cache)
+
 Limites da API:
 - tamanhoPagina máximo = 50 (qualquer valor > 50 retorna 400)
 - Sem limite de data range, mas ranges grandes geram milhares de páginas
@@ -14,6 +21,7 @@ import logging
 from datetime import date, datetime, timedelta
 from typing import Callable
 
+import httpx
 from django.conf import settings
 
 from .base import BaseConnector, NormalizedOpportunity
@@ -51,6 +59,16 @@ class PNCPConnector(BaseConnector):
             base_url=settings.PNCP_API_BASE_URL,
             rate_limit_rpm=settings.PNCP_RATE_LIMIT_RPM,
         )
+        self._consulta_client = httpx.Client(
+            base_url=settings.PNCP_CONSULTA_API_BASE_URL,
+            timeout=30.0,
+            follow_redirects=True,
+            headers={"Accept": "application/json", "User-Agent": "LicitaAI/1.0"},
+        )
+
+    def close(self):
+        self.client.close()
+        self._consulta_client.close()
 
     def _parse_datetime(self, dt_str: str | None) -> str | None:
         """Parse PNCP datetime strings."""
@@ -243,3 +261,157 @@ class PNCPConnector(BaseConnector):
             }
             for doc in docs
         ]
+
+    # ── Monitoring methods ─────────────────────────────────
+
+    def fetch_updated_procurement_ids(
+        self, date_from: date, date_to: date
+    ) -> list[dict]:
+        """
+        List procurements updated in the period via API CONSULTA.
+
+        Endpoint: GET /v1/contratacoes/atualizacao
+        Returns list of dicts with cnpj, ano, seq, external_id.
+        """
+        results = []
+        page = 1
+
+        while True:
+            params = {
+                "dataInicial": date_from.strftime("%Y%m%d"),
+                "dataFinal": date_to.strftime("%Y%m%d"),
+                "pagina": page,
+                "tamanhoPagina": 50,
+            }
+
+            try:
+                data = self._get_nocache(
+                    "/v1/contratacoes/atualizacao",
+                    params=params,
+                    client=self._consulta_client,
+                )
+            except Exception:
+                logger.warning(
+                    "PNCP atualizacao fetch failed page=%d", page, exc_info=True,
+                )
+                break
+
+            items = data.get("data", [])
+            if not items:
+                break
+
+            for item in items:
+                orgao = item.get("orgaoEntidade", {})
+                cnpj = orgao.get("cnpj", "")
+                ano = item.get("anoCompra", "")
+                seq = item.get("sequencialCompra", "")
+                if cnpj and ano and seq:
+                    results.append({
+                        "cnpj": cnpj,
+                        "ano": ano,
+                        "seq": seq,
+                        "external_id": f"pncp:{cnpj}:{ano}:{seq}",
+                    })
+
+            total_pages = data.get("totalPaginas", 1)
+            if page >= total_pages:
+                break
+            page += 1
+
+        logger.info(
+            "PNCP atualizacao: %d updated procurements (%s to %s)",
+            len(results), date_from, date_to,
+        )
+        return results
+
+    def fetch_opportunity_detail(self, cnpj: str, ano: str, seq: str) -> dict:
+        """
+        Fetch current detail of a procurement (no cache).
+
+        Endpoint: GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}
+        """
+        try:
+            return self._get_nocache(
+                f"/v1/orgaos/{cnpj}/compras/{ano}/{seq}",
+                client=self._consulta_client,
+            )
+        except Exception:
+            logger.exception("PNCP detail fetch failed: %s/%s/%s", cnpj, ano, seq)
+            return {}
+
+    def fetch_results(self, cnpj: str, ano: str, seq: str) -> list[dict]:
+        """
+        Fetch results for each item of a procurement.
+
+        Endpoint: GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens/{item}/resultados
+        """
+        all_results = []
+        try:
+            items_data = self._get_nocache(
+                f"/v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens",
+                client=self._consulta_client,
+            )
+        except Exception:
+            logger.exception("PNCP items fetch (for results) failed: %s/%s/%s", cnpj, ano, seq)
+            return []
+
+        items = items_data if isinstance(items_data, list) else items_data.get("data", [])
+        for item in items:
+            num = item.get("numeroItem")
+            if not num:
+                continue
+            try:
+                result_data = self._get_nocache(
+                    f"/v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens/{num}/resultados",
+                    client=self._consulta_client,
+                )
+                results = result_data if isinstance(result_data, list) else result_data.get("data", [])
+                for r in results:
+                    r["_itemNumero"] = num
+                all_results.extend(results)
+            except Exception:
+                logger.warning(
+                    "PNCP results fetch failed: %s/%s/%s item %s",
+                    cnpj, ano, seq, num,
+                )
+        return all_results
+
+    def fetch_atas(self, cnpj: str, ano: str, seq: str) -> list[dict]:
+        """
+        Fetch atas de registro de preço.
+
+        Endpoint: GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}/atas
+        """
+        try:
+            data = self._get_nocache(
+                f"/v1/orgaos/{cnpj}/compras/{ano}/{seq}/atas",
+                client=self._consulta_client,
+            )
+            return data if isinstance(data, list) else data.get("data", [])
+        except Exception:
+            logger.exception("PNCP atas fetch failed: %s/%s/%s", cnpj, ano, seq)
+            return []
+
+    def fetch_documents_fresh(self, cnpj: str, ano: str, seq: str) -> list[dict]:
+        """
+        Fetch documents WITHOUT cache (for monitoring).
+
+        Endpoint: GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}/arquivos
+        """
+        try:
+            data = self._get_nocache(
+                f"/v1/orgaos/{cnpj}/compras/{ano}/{seq}/arquivos",
+                client=self._consulta_client,
+            )
+            docs = data if isinstance(data, list) else data.get("data", [])
+            return [
+                {
+                    "url": doc.get("uri", doc.get("url", "")),
+                    "file_name": doc.get("nomeArquivo", ""),
+                    "doc_type": doc.get("tipoDocumentoNome", ""),
+                }
+                for doc in docs
+            ]
+        except Exception:
+            logger.exception("PNCP fresh docs fetch failed: %s/%s/%s", cnpj, ano, seq)
+            return []

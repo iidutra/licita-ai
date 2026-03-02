@@ -7,6 +7,7 @@ from apps.opportunities.models import (
     AISummary,
     Opportunity,
     OpportunityDocument,
+    OpportunityEvent,
     OpportunityItem,
 )
 
@@ -17,7 +18,8 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "cnpj", "trade_name", "email", "phone",
             "regions", "keywords", "categories", "min_margin_pct",
-            "max_value", "is_active", "created_at",
+            "max_value", "is_active", "notify_whatsapp", "whatsapp_phone",
+            "created_at",
         ]
 
 
@@ -57,6 +59,15 @@ class AISummarySerializer(serializers.ModelSerializer):
         ]
 
 
+class OpportunityEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OpportunityEvent
+        fields = [
+            "id", "event_type", "old_value", "new_value",
+            "description", "detected_at",
+        ]
+
+
 class MatchSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source="client.name", read_only=True)
 
@@ -88,6 +99,7 @@ class OpportunitySerializer(serializers.ModelSerializer):
 class OpportunityDetailSerializer(OpportunitySerializer):
     ai_summaries = AISummarySerializer(many=True, read_only=True)
     matches = MatchSerializer(many=True, read_only=True)
+    events = OpportunityEventSerializer(many=True, read_only=True)
 
     class Meta(OpportunitySerializer.Meta):
-        fields = OpportunitySerializer.Meta.fields + ["ai_summaries", "matches"]
+        fields = OpportunitySerializer.Meta.fields + ["ai_summaries", "matches", "events"]

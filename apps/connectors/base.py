@@ -94,6 +94,22 @@ class BaseConnector(ABC):
         cache.set(cache_key, data, timeout=300)  # 5 min
         return data
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=2, min=2, max=30),
+        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.ConnectError)),
+    )
+    def _get_nocache(self, path: str, params: dict | None = None, client: httpx.Client | None = None) -> dict:
+        """GET with throttling and retry, but WITHOUT cache (for monitoring)."""
+        self._throttle()
+        http_client = client or self.client
+        logger.info("GET (nocache) %s%s params=%s", http_client.base_url, path, params)
+        resp = http_client.get(path, params=params)
+        resp.raise_for_status()
+        if resp.status_code == 204 or not resp.content:
+            return {}
+        return resp.json()
+
     @abstractmethod
     def fetch_opportunities(
         self, date_from: date, date_to: date, **kwargs

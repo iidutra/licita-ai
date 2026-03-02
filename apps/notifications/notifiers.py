@@ -64,12 +64,44 @@ def send_webhook_notification(notification: EventNotification) -> bool:
         return False
 
 
+def send_whatsapp_notification(notification: EventNotification) -> bool:
+    """Send a WhatsApp message via WAHA API."""
+    phone = notification.recipient
+    if not phone:
+        logger.warning("No phone for WhatsApp notification %s", notification.id)
+        return False
+    try:
+        resp = httpx.post(
+            f"{settings.WAHA_API_URL}/api/sendText",
+            headers={"X-Api-Key": settings.WAHA_API_KEY},
+            json={
+                "session": settings.WAHA_SESSION,
+                "chatId": f"{phone}@c.us",
+                "text": f"*{notification.subject}*\n\n{notification.body}",
+            },
+            timeout=15,
+        )
+        resp.raise_for_status()
+        notification.delivery_status = EventNotification.DeliveryStatus.SENT
+        notification.sent_at = timezone.now()
+        notification.save(update_fields=["delivery_status", "sent_at", "updated_at"])
+        return True
+    except Exception as exc:
+        notification.delivery_status = EventNotification.DeliveryStatus.FAILED
+        notification.error_message = str(exc)
+        notification.save(update_fields=["delivery_status", "error_message", "updated_at"])
+        logger.exception("WhatsApp notification failed: %s", notification.id)
+        return False
+
+
 def dispatch_notification(notification: EventNotification) -> bool:
     """Route notification to the correct channel."""
     if notification.channel == EventNotification.Channel.EMAIL:
         return send_email_notification(notification)
     elif notification.channel == EventNotification.Channel.WEBHOOK:
         return send_webhook_notification(notification)
+    elif notification.channel == EventNotification.Channel.WHATSAPP:
+        return send_whatsapp_notification(notification)
     # INTERNAL = just stored in DB, shown in dashboard
     notification.delivery_status = EventNotification.DeliveryStatus.SENT
     notification.sent_at = timezone.now()

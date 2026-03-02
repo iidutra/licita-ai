@@ -41,10 +41,30 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=0, hour="*/2"),
         "options": {"queue": "documents"},
     },
-    # Checar prazos críticos — diariamente 08:00 UTC
+    # Avisos de prazo (escala progressiva) — 2x/dia: 08:00 e 14:00 UTC (05:00 e 11:00 BRT)
     "check-deadlines": {
         "task": "apps.notifications.tasks.check_critical_deadlines",
-        "schedule": crontab(hour=8, minute=0),
+        "schedule": crontab(hour="8,14", minute=0),
         "options": {"queue": "notifications"},
+    },
+    # Avisos de abertura/sessão — 2x/dia: 08:15 e 18:15 UTC (05:15 e 15:15 BRT)
+    "check-proposals-opening": {
+        "task": "apps.notifications.tasks.check_proposals_opening",
+        "schedule": crontab(hour="8,18", minute=15),
+        "options": {"queue": "notifications"},
+    },
+    # Alerta de sessão iminente — a cada 5 min (07:00–23:00 UTC = 04:00–20:00 BRT)
+    "check-session-imminent": {
+        "task": "apps.notifications.tasks.check_session_imminent",
+        "schedule": crontab(minute="*/5", hour="7-23"),
+        "options": {"queue": "notifications"},
+    },
+    # Monitoramento de pregões — 5x/dia em horário comercial BRT (UTC-3)
+    # 08:30, 11:30, 14:30, 17:30, 20:30 BRT = 11:30, 14:30, 17:30, 20:30, 23:30 UTC
+    "monitor-pregoes": {
+        "task": "apps.connectors.tasks.monitor_pregoes",
+        "schedule": crontab(minute=30, hour="11,14,17,20,23"),
+        "kwargs": {"hours_back": 6},
+        "options": {"queue": "ingest"},
     },
 }

@@ -17,6 +17,7 @@
 │                    CELERY BEAT (Scheduler)                           │
 │  06:00 UTC → ingest_pncp    06:30 UTC → ingest_compras_gov         │
 │  */2h → download_pending    08:00 UTC → check_deadlines             │
+│  5x/dia BRT → monitor_pregoes (monitoramento de mudancas)           │
 └─────────────────────┬───────────────────────────────────────────────┘
                       │
                       ▼
@@ -101,6 +102,7 @@ Download PDF  →  pdfplumber (texto nativo)
 | ExtractedRequirement | opportunities | opportunity FK, category, requirement, evidence (JSON) |
 | AISummary            | opportunities | opportunity FK, analysis_type, content (JSON), prompt_version, model_name |
 | Match                | matching      | opportunity FK, client FK, score (0-100), justification, missing_docs/capabilities |
+| OpportunityEvent     | opportunities | opportunity FK, event_type, old/new_value, description, dedup_hash, detected_at |
 | EventNotification    | notifications | event_type, channel, recipient, subject, body, delivery_status |
 
 ## C) URLs/Views
@@ -127,11 +129,18 @@ Download PDF  →  pdfplumber (texto nativo)
 
 ## D) Conectores — Endpoints Reais
 
-### PNCP (pncp.gov.br/api/pncp)
-- `GET /v1/contratacoes/publicacao?dataInicial=yyyyMMdd&dataFinal=yyyyMMdd&uf=XX&pagina=1&tamanhoPagina=500`
+### PNCP — Ingestão (pncp.gov.br/api/pncp)
+- `GET /v1/contratacoes/publicacao?dataInicial=yyyyMMdd&dataFinal=yyyyMMdd&uf=XX&pagina=1&tamanhoPagina=50`
 - `GET /v1/orgaos/{cnpj}/compras/{anoCompra}/{sequencialCompra}/itens`
 - `GET /v1/orgaos/{cnpj}/compras/{anoCompra}/{sequencialCompra}/arquivos`
 - Público, sem autenticação para leitura
+
+### PNCP — Monitoramento (pncp.gov.br/api/consulta)
+- `GET /v1/contratacoes/atualizacao?dataInicial=yyyyMMdd&dataFinal=yyyyMMdd` — compras atualizadas
+- `GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}` — detalhe atual
+- `GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}/itens/{item}/resultados` — resultados
+- `GET /v1/orgaos/{cnpj}/compras/{ano}/{seq}/atas` — atas de registro de preço
+- Sem cache (dados sempre frescos); vide [docs/RN_MONITORAMENTO_PREGOES.md](docs/RN_MONITORAMENTO_PREGOES.md)
 
 ### Compras.gov (dadosabertos.compras.gov.br)
 - `GET /modulo-licitacao/v1/licitacoes?dataInicial=yyyy-MM-dd&dataFinal=yyyy-MM-dd&pagina=1`
@@ -170,10 +179,10 @@ Download PDF  →  pdfplumber (texto nativo)
 
 | Queue          | Tasks                                          | Schedule             |
 |----------------|------------------------------------------------|----------------------|
-| ingest         | ingest_pncp, ingest_compras_gov                | Diário 06:00/06:30   |
+| ingest         | ingest_pncp, ingest_compras_gov, monitor_pregoes | Diário 06:00/06:30 + 5x/dia BRT |
 | documents      | download_*, extract_document_text              | A cada 2h + on-demand|
 | ai             | run_ai_analysis, run_matching                  | On-demand            |
-| notifications  | create_notification, check_critical_deadlines  | Diário 08:00         |
+| notifications  | create_notification, check_critical_deadlines, notify_pregao_event | Diário 08:00 + on-demand |
 
 ## G) Docker Compose
 
@@ -213,7 +222,7 @@ LicitaAi/
 │   ├── core/                # Base models, storage, utils
 │   ├── clients/             # Client + ClientDocument (models/views/forms/admin/urls)
 │   ├── opportunities/       # Opportunity + Items + Docs + Chunks + Reqs + AI (models/views/forms/admin/urls/tasks)
-│   ├── connectors/          # PNCP + ComprasGov connectors (base/pncp/compras_gov/normalizer/tasks)
+│   ├── connectors/          # PNCP + ComprasGov connectors (base/pncp/compras_gov/normalizer/monitoring/tasks)
 │   ├── ai_engine/           # RAG pipeline (embeddings/prompts/pipeline/rag/tasks)
 │   ├── matching/            # Match engine (models/engine/admin/tasks)
 │   ├── notifications/       # Alerts (models/notifiers/admin/tasks)
@@ -230,6 +239,7 @@ LicitaAi/
     ├── test_connectors.py   # Unit: connectors (mocked HTTP)
     ├── test_views.py        # Integration: views (auth + CRUD)
     ├── test_ai.py           # Unit: AI pipeline (mocked LLM)
+    ├── test_monitoring.py   # Unit: monitoramento de pregões (detect_changes, persist_events, dedup)
     └── golden_files/        # Expected AI outputs
         ├── extraction_expected.json
         └── matching_expected.json
@@ -265,6 +275,7 @@ make test-cov     # pytest --cov=apps --cov-report=html
 - [x] Alertas internos + email + webhook
 - [x] Docker Compose (1 comando)
 - [x] API DRF base
+- [x] Monitoramento de pregões (polling PNCP + detecção de mudanças + notificações)
 
 ### Fase 2 — v1.0
 - [ ] Mais fontes: BEC-SP, Licitanet, Portal de Compras MG, TCE

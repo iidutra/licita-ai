@@ -20,6 +20,7 @@
           <tr><td class="fw-semibold" style="width:150px">CNPJ</td><td>{{ client.cnpj }}</td></tr>
           <tr><td class="fw-semibold">E-mail</td><td>{{ client.email|default:"—" }}</td></tr>
           <tr><td class="fw-semibold">Telefone</td><td>{{ client.phone|default:"—" }}</td></tr>
+          <tr><td class="fw-semibold">WhatsApp</td><td>{{ client.whatsapp_phone|default:"—" }}{% if client.notify_whatsapp %} <span class="badge bg-success">Ativo</span>{% endif %}</td></tr>
           <tr><td class="fw-semibold">UFs</td><td>{{ client.regions|join:", "|default:"—" }}</td></tr>
           <tr><td class="fw-semibold">Palavras-chave</td><td>{{ client.keywords|join:", "|default:"—" }}</td></tr>
           <tr><td class="fw-semibold">Categorias</td><td>{{ client.categories|join:", "|default:"—" }}</td></tr>

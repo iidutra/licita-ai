@@ -86,6 +86,11 @@ class Opportunity(TimeStampedModel):
     raw_data = models.JSONField("Dados brutos da API", default=dict, blank=True)
     link = models.URLField("Link no sistema de origem", max_length=2000, blank=True)
 
+    # Monitoramento
+    last_monitored_at = models.DateTimeField(
+        "Última verificação", null=True, blank=True,
+    )
+
     # Status interno
     status = models.CharField(
         "Status", max_length=20, choices=Status.choices, default=Status.NEW, db_index=True
@@ -268,3 +273,40 @@ class AISummary(TimeStampedModel):
 
     def __str__(self):
         return f"{self.get_analysis_type_display()} — {self.opportunity}"
+
+
+class OpportunityEvent(TimeStampedModel):
+    """Evento/movimentação detectada no monitoramento de uma oportunidade."""
+
+    class EventType(models.TextChoices):
+        STATUS_CHANGE = "status_change", "Mudança de Status"
+        NEW_DOCUMENT = "new_document", "Novo Documento"
+        RESULT_PUBLISHED = "result_published", "Resultado Publicado"
+        ATA_PUBLISHED = "ata_published", "Ata Publicada"
+        DEADLINE_CHANGED = "deadline_changed", "Prazo Alterado"
+        VALUE_CHANGED = "value_changed", "Valor Alterado"
+        GENERAL_UPDATE = "general_update", "Atualização Geral"
+
+    opportunity = models.ForeignKey(
+        Opportunity, on_delete=models.CASCADE, related_name="events"
+    )
+    event_type = models.CharField(
+        "Tipo do evento", max_length=30, choices=EventType.choices, db_index=True
+    )
+    old_value = models.TextField("Valor anterior", blank=True, default="")
+    new_value = models.TextField("Valor novo", blank=True, default="")
+    description = models.TextField("Descrição", blank=True, default="")
+    raw_data = models.JSONField("Dados brutos", default=dict, blank=True)
+    dedup_hash = models.CharField(
+        "Hash de dedup", max_length=64, unique=True,
+        help_text="SHA-256 para idempotência do evento",
+    )
+    detected_at = models.DateTimeField("Detectado em", auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Evento da Oportunidade"
+        verbose_name_plural = "Eventos das Oportunidades"
+        ordering = ["-detected_at"]
+
+    def __str__(self):
+        return f"[{self.get_event_type_display()}] {self.opportunity.title[:60]}"

@@ -27,15 +27,14 @@ class TestChunking:
 
 
 class TestAIRAG:
-    @patch("apps.ai_engine.rag._get_client")
+    @patch("apps.ai_engine.rag._call_llm")
     @patch("apps.ai_engine.embeddings.search_similar_chunks")
-    def test_run_extraction(self, mock_search, mock_client, sample_opportunity):
+    def test_run_extraction(self, mock_search, mock_call_llm, sample_opportunity):
         """Test extraction with mocked LLM."""
         mock_search.return_value = []
 
-        mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(message=MagicMock(content=json.dumps({
+        mock_call_llm.return_value = (
+            {
                 "resumo": "Aquisição de software",
                 "checklist_habilitacao": {
                     "fiscal": [{"requisito": "CND Federal", "evidencia": {"fonte": "api", "trecho": "...", "pagina": None, "confianca": 0.8}}],
@@ -45,13 +44,9 @@ class TestAIRAG:
                 },
                 "riscos": [],
                 "campos_extraidos": {},
-            })))
-        ]
-        mock_response.usage = MagicMock(total_tokens=500)
-
-        llm_instance = MagicMock()
-        llm_instance.chat.completions.create.return_value = mock_response
-        mock_client.return_value = llm_instance
+            },
+            500,
+        )
 
         from apps.ai_engine.rag import run_extraction
         summary = run_extraction(sample_opportunity)

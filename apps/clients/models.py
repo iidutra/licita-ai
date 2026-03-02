@@ -50,6 +50,11 @@ class Client(TimeStampedModel):
     restrictions = models.TextField("Restrições", blank=True)
     is_active = models.BooleanField("Ativo", default=True)
     notify_email = models.BooleanField("Notificar por e-mail", default=True)
+    notify_whatsapp = models.BooleanField("Notificar por WhatsApp", default=False)
+    whatsapp_phone = models.CharField(
+        "WhatsApp", max_length=20, blank=True,
+        help_text="Formato: 5511999999999 (DDI+DDD+numero)",
+    )
     webhook_url = models.URLField("Webhook URL", blank=True)
 
     class Meta:

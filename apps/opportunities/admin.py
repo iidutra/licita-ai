@@ -6,6 +6,7 @@ from .models import (
     ExtractedRequirement,
     Opportunity,
     OpportunityDocument,
+    OpportunityEvent,
     OpportunityItem,
 )
 
@@ -23,6 +24,13 @@ class OpportunityDocumentInline(admin.TabularInline):
     readonly_fields = ["file_hash"]
 
 
+class OpportunityEventInline(admin.TabularInline):
+    model = OpportunityEvent
+    extra = 0
+    fields = ["event_type", "description", "old_value", "new_value", "detected_at"]
+    readonly_fields = ["event_type", "description", "old_value", "new_value", "detected_at"]
+
+
 @admin.register(Opportunity)
 class OpportunityAdmin(admin.ModelAdmin):
     list_display = [
@@ -31,8 +39,8 @@ class OpportunityAdmin(admin.ModelAdmin):
     ]
     list_filter = ["source", "status", "modality", "entity_uf"]
     search_fields = ["title", "entity_name", "entity_cnpj", "number"]
-    readonly_fields = ["dedup_hash", "object_hash", "raw_data"]
-    inlines = [OpportunityItemInline, OpportunityDocumentInline]
+    readonly_fields = ["dedup_hash", "object_hash", "raw_data", "last_monitored_at"]
+    inlines = [OpportunityItemInline, OpportunityDocumentInline, OpportunityEventInline]
     date_hierarchy = "published_at"
 
     @admin.display(description="Objeto")
@@ -60,6 +68,15 @@ class DocumentChunkAdmin(admin.ModelAdmin):
 class ExtractedRequirementAdmin(admin.ModelAdmin):
     list_display = ["opportunity", "category", "requirement", "is_mandatory"]
     list_filter = ["category", "is_mandatory"]
+
+
+@admin.register(OpportunityEvent)
+class OpportunityEventAdmin(admin.ModelAdmin):
+    list_display = ["opportunity", "event_type", "description", "detected_at"]
+    list_filter = ["event_type"]
+    search_fields = ["opportunity__title", "description", "new_value"]
+    date_hierarchy = "detected_at"
+    readonly_fields = ["dedup_hash", "raw_data"]
 
 
 @admin.register(AISummary)

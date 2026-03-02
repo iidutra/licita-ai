@@ -206,6 +206,12 @@ EMBEDDING_DIMENSIONS = 3072
 PNCP_API_BASE_URL = env("PNCP_API_BASE_URL", default="https://pncp.gov.br/api/pncp")
 PNCP_RATE_LIMIT_RPM = env.int("PNCP_RATE_LIMIT_RPM", default=60)
 
+PNCP_CONSULTA_API_BASE_URL = env(
+    "PNCP_CONSULTA_API_BASE_URL", default="https://pncp.gov.br/api/consulta"
+)
+MONITORING_BATCH_SIZE = env.int("MONITORING_BATCH_SIZE", default=50)
+MONITORING_MIN_MATCH_SCORE = env.int("MONITORING_MIN_MATCH_SCORE", default=60)
+
 COMPRAS_GOV_API_BASE_URL = env(
     "COMPRAS_GOV_API_BASE_URL", default="https://dadosabertos.compras.gov.br"
 )
@@ -220,6 +226,11 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="licitaai@example.com")
 
 WEBHOOK_URL = env("WEBHOOK_URL", default="")
+
+# WhatsApp via WAHA
+WAHA_API_URL = env("WAHA_API_URL", default="http://waha:3000")
+WAHA_API_KEY = env("WAHA_API_KEY", default="")
+WAHA_SESSION = env("WAHA_SESSION", default="default")
 
 # ── OCR ─────────────────────────────────────────────────
 TESSERACT_LANG = env("TESSERACT_LANG", default="por")

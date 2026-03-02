@@ -103,6 +103,20 @@ services:
     volumes:
       - .:/app
 
+  # ── WAHA (WhatsApp HTTP API) ────────────────────────────
+  waha:
+    image: devlikeapro/waha
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: WEBJS
+      WAHA_DASHBOARD_ENABLED: "true"
+      WAHA_API_KEY: ${WAHA_API_KEY:-}
+    ports:
+      - "3000:3000"
+    volumes:
+      - waha_data:/app/.sessions
+    restart: unless-stopped
+
 volumes:
   pgdata:
   minio_data:
+  waha_data:

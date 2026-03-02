@@ -3,6 +3,7 @@ import logging
 from datetime import date, timedelta
 
 from celery import shared_task
+from django.utils import timezone
 
 from .normalizer import persist_opportunity
 from .pncp import PNCPConnector, ALL_MODALITIES
@@ -99,3 +100,140 @@ def ingest_compras_gov(self, days_back: int = 1):
     except Exception as exc:
         logger.exception("Compras.gov ingestion failed")
         raise self.retry(exc=exc)
+
+
+@shared_task(bind=True, queue="ingest", max_retries=2, default_retry_delay=300)
+def monitor_pregoes(self, hours_back: int = 6):
+    """
+    Monitor PNCP procurements for changes.
+
+    1. Fetch updated procurement IDs from PNCP CONSULTA API.
+    2. Filter to only tracked opportunities (active, deadline not passed).
+    3. For each: fetch detail, docs, results, atas → detect changes → persist events.
+    4. Notify interested clients for each new event.
+    """
+    from apps.opportunities.models import Opportunity
+    from .monitoring import detect_changes, persist_events, update_opportunity_from_fresh
+
+    now = timezone.now()
+    date_from = (now - timedelta(hours=hours_back)).date()
+    date_to = now.date()
+
+    logger.info("Monitor pregões: checking updates from %s to %s", date_from, date_to)
+
+    try:
+        with PNCPConnector() as connector:
+            # Phase 1: Discover which procurements were updated
+            updated_items = connector.fetch_updated_procurement_ids(date_from, date_to)
+            if not updated_items:
+                logger.info("Monitor pregões: no updates found")
+                return {"checked": 0, "events": 0}
+
+            updated_ext_ids = {item["external_id"] for item in updated_items}
+
+            # Phase 2: Filter to tracked opportunities
+            active_statuses = [
+                Opportunity.Status.NEW,
+                Opportunity.Status.ANALYZING,
+                Opportunity.Status.ELIGIBLE,
+                Opportunity.Status.SUBMITTED,
+            ]
+            tracked = Opportunity.objects.filter(
+                source=Opportunity.Source.PNCP,
+                status__in=active_statuses,
+                external_id__in=updated_ext_ids,
+            ).filter(
+                models_Q_deadline_or_none(now),
+            )
+
+            # Build lookup for cnpj/ano/seq from updated_items
+            ext_id_to_parts = {
+                item["external_id"]: item for item in updated_items
+            }
+
+            total_events = 0
+            checked = 0
+
+            # Phase 3: For each tracked opportunity, fetch fresh data and detect changes
+            for opp in tracked:
+                parts = ext_id_to_parts.get(opp.external_id)
+                if not parts:
+                    continue
+
+                cnpj, ano, seq = parts["cnpj"], str(parts["ano"]), str(parts["seq"])
+
+                try:
+                    fresh_data = connector.fetch_opportunity_detail(cnpj, ano, seq)
+                    if not fresh_data:
+                        continue
+
+                    fresh_docs = connector.fetch_documents_fresh(cnpj, ano, seq)
+                    fresh_results = connector.fetch_results(cnpj, ano, seq)
+                    fresh_atas = connector.fetch_atas(cnpj, ano, seq)
+
+                    event_dicts = detect_changes(
+                        opp, fresh_data, fresh_docs, fresh_results, fresh_atas,
+                    )
+
+                    if event_dicts:
+                        created_events = persist_events(opp, event_dicts)
+                        total_events += len(created_events)
+
+                        # Persist new documents
+                        from apps.opportunities.models import OpportunityEvent as OppEvent
+                        for ev in event_dicts:
+                            if ev["event_type"] == OppEvent.EventType.NEW_DOCUMENT and ev.get("raw_data", {}).get("url"):
+                                _persist_new_document(opp, ev["raw_data"])
+
+                        # Notify for each new event
+                        from apps.notifications.tasks import notify_pregao_event
+                        for event in created_events:
+                            notify_pregao_event.delay(str(opp.pk), str(event.pk))
+
+                    update_opportunity_from_fresh(opp, fresh_data, fresh_results, fresh_atas)
+                    checked += 1
+
+                except Exception:
+                    logger.exception(
+                        "Monitor pregões: error processing %s", opp.external_id,
+                    )
+
+            logger.info(
+                "Monitor pregões complete: %d checked, %d events created",
+                checked, total_events,
+            )
+            return {"checked": checked, "events": total_events}
+
+    except Exception as exc:
+        logger.exception("Monitor pregões failed")
+        raise self.retry(exc=exc)
+
+
+def models_Q_deadline_or_none(now):
+    """Return Q filter: deadline > now OR deadline is null."""
+    from django.db.models import Q
+    return Q(deadline__gt=now) | Q(deadline__isnull=True)
+
+
+def _persist_new_document(opportunity, doc_data: dict):
+    """Create an OpportunityDocument for a newly detected document."""
+    from apps.opportunities.models import OpportunityDocument
+
+    url = doc_data.get("url", "")
+    if not url:
+        return
+
+    if opportunity.documents.filter(original_url=url).exists():
+        return
+
+    OpportunityDocument.objects.create(
+        opportunity=opportunity,
+        original_url=url,
+        file_name=doc_data.get("file_name", ""),
+        doc_type=doc_data.get("doc_type", ""),
+        processing_status=OpportunityDocument.ProcessingStatus.PENDING,
+    )
+
+    # Trigger download
+    from apps.opportunities.tasks import download_opportunity_documents
+    download_opportunity_documents.delay(str(opportunity.pk))

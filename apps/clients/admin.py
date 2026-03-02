@@ -10,9 +10,9 @@ class ClientDocumentInline(admin.TabularInline):
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ["name", "cnpj", "email", "is_active", "created_at"]
-    list_filter = ["is_active", "regions"]
-    search_fields = ["name", "cnpj", "trade_name"]
+    list_display = ["name", "cnpj", "email", "is_active", "notify_whatsapp", "created_at"]
+    list_filter = ["is_active", "notify_whatsapp", "regions"]
+    search_fields = ["name", "cnpj", "trade_name", "whatsapp_phone"]
     inlines = [ClientDocumentInline]
 
 
