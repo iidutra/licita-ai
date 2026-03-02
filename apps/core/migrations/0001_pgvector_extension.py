@@ -1,6 +1,27 @@
 """Create pgvector extension before any model uses vector columns."""
 
+import logging
+
 from django.db import migrations
+
+logger = logging.getLogger(__name__)
+
+
+def create_vector_extension(apps, schema_editor):
+    """Try to create pgvector extension; skip gracefully if unavailable."""
+    try:
+        schema_editor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+    except Exception as e:
+        logger.warning(
+            "pgvector extension not available — vector search will be disabled. %s", e
+        )
+
+
+def drop_vector_extension(apps, schema_editor):
+    try:
+        schema_editor.execute("DROP EXTENSION IF EXISTS vector;")
+    except Exception:
+        pass
 
 
 class Migration(migrations.Migration):
@@ -10,8 +31,5 @@ class Migration(migrations.Migration):
     dependencies = []
 
     operations = [
-        migrations.RunSQL(
-            "CREATE EXTENSION IF NOT EXISTS vector;",
-            reverse_sql="DROP EXTENSION IF EXISTS vector;",
-        ),
+        migrations.RunPython(create_vector_extension, drop_vector_extension),
     ]

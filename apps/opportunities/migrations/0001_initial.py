@@ -114,26 +114,55 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Documentos da Oportunidade',
             },
         ),
-        migrations.CreateModel(
-            name='DocumentChunk',
-            fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('chunk_index', models.PositiveIntegerField(verbose_name='Índice do chunk')),
-                ('content', models.TextField(verbose_name='Conteúdo do chunk')),
-                ('page_number', models.PositiveIntegerField(blank=True, null=True, verbose_name='Página')),
-                ('token_count', models.PositiveIntegerField(blank=True, null=True, verbose_name='Tokens')),
-                ('embedding', pgvector.django.vector.VectorField(blank=True, dimensions=1536, null=True, verbose_name='Embedding')),
-                ('document', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='chunks', to='opportunities.opportunitydocument')),
+        # DocumentChunk: use SeparateDatabaseAndState so the DB uses TEXT
+        # fallback when pgvector extension is not available.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.CreateModel(
+                    name='DocumentChunk',
+                    fields=[
+                        ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                        ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
+                        ('updated_at', models.DateTimeField(auto_now=True)),
+                        ('chunk_index', models.PositiveIntegerField(verbose_name='Índice do chunk')),
+                        ('content', models.TextField(verbose_name='Conteúdo do chunk')),
+                        ('page_number', models.PositiveIntegerField(blank=True, null=True, verbose_name='Página')),
+                        ('token_count', models.PositiveIntegerField(blank=True, null=True, verbose_name='Tokens')),
+                        ('embedding', pgvector.django.vector.VectorField(blank=True, dimensions=1536, null=True, verbose_name='Embedding')),
+                        ('document', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='chunks', to='opportunities.opportunitydocument')),
+                    ],
+                    options={
+                        'verbose_name': 'Chunk de Documento',
+                        'verbose_name_plural': 'Chunks de Documentos',
+                        'ordering': ['chunk_index'],
+                        'indexes': [models.Index(fields=['document', 'chunk_index'], name='idx_chunk_doc_idx')],
+                        'unique_together': {('document', 'chunk_index')},
+                    },
+                ),
             ],
-            options={
-                'verbose_name': 'Chunk de Documento',
-                'verbose_name_plural': 'Chunks de Documentos',
-                'ordering': ['chunk_index'],
-                'indexes': [models.Index(fields=['document', 'chunk_index'], name='idx_chunk_doc_idx')],
-                'unique_together': {('document', 'chunk_index')},
-            },
+            database_operations=[
+                migrations.CreateModel(
+                    name='DocumentChunk',
+                    fields=[
+                        ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                        ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
+                        ('updated_at', models.DateTimeField(auto_now=True)),
+                        ('chunk_index', models.PositiveIntegerField(verbose_name='Índice do chunk')),
+                        ('content', models.TextField(verbose_name='Conteúdo do chunk')),
+                        ('page_number', models.PositiveIntegerField(blank=True, null=True, verbose_name='Página')),
+                        ('token_count', models.PositiveIntegerField(blank=True, null=True, verbose_name='Tokens')),
+                        ('embedding', models.TextField(blank=True, null=True, verbose_name='Embedding')),
+                        ('document', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='chunks', to='opportunities.opportunitydocument')),
+                    ],
+                    options={
+                        'verbose_name': 'Chunk de Documento',
+                        'verbose_name_plural': 'Chunks de Documentos',
+                        'ordering': ['chunk_index'],
+                        'indexes': [models.Index(fields=['document', 'chunk_index'], name='idx_chunk_doc_idx')],
+                        'unique_together': {('document', 'chunk_index')},
+                    },
+                ),
+            ],
         ),
         migrations.CreateModel(
             name='OpportunityItem',
