@@ -2,33 +2,26 @@
 
 import logging
 
-from django.db import migrations
+from django.db import migrations, transaction
 
 logger = logging.getLogger(__name__)
 
 
 def create_vector_extension(apps, schema_editor):
     """Try to create pgvector extension; skip gracefully if unavailable."""
-    connection = schema_editor.connection
-    with connection.cursor() as cursor:
-        cursor.execute("SAVEPOINT pgvector_ext")
-        try:
-            cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-            cursor.execute("RELEASE SAVEPOINT pgvector_ext")
-        except Exception as e:
-            cursor.execute("ROLLBACK TO SAVEPOINT pgvector_ext")
-            logger.warning("pgvector extension not available — vector search disabled. %s", e)
+    try:
+        with transaction.atomic(using=schema_editor.connection.alias):
+            schema_editor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+    except Exception as e:
+        logger.warning("pgvector extension not available — vector search disabled. %s", e)
 
 
 def drop_vector_extension(apps, schema_editor):
-    connection = schema_editor.connection
-    with connection.cursor() as cursor:
-        cursor.execute("SAVEPOINT pgvector_drop")
-        try:
-            cursor.execute("DROP EXTENSION IF EXISTS vector;")
-            cursor.execute("RELEASE SAVEPOINT pgvector_drop")
-        except Exception:
-            cursor.execute("ROLLBACK TO SAVEPOINT pgvector_drop")
+    try:
+        with transaction.atomic(using=schema_editor.connection.alias):
+            schema_editor.execute("DROP EXTENSION IF EXISTS vector;")
+    except Exception:
+        pass
 
 
 class Migration(migrations.Migration):

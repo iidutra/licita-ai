@@ -3,24 +3,20 @@
 import logging
 
 import pgvector.django.vector
-from django.db import migrations
+from django.db import migrations, transaction
 
 logger = logging.getLogger(__name__)
 
 
 def try_alter_vector_768(apps, schema_editor):
-    connection = schema_editor.connection
-    with connection.cursor() as cursor:
-        cursor.execute("SAVEPOINT vec_768")
-        try:
-            cursor.execute(
+    try:
+        with transaction.atomic(using=schema_editor.connection.alias):
+            schema_editor.execute(
                 "ALTER TABLE opportunities_documentchunk "
                 "ALTER COLUMN embedding TYPE vector(768) USING embedding::vector(768);"
             )
-            cursor.execute("RELEASE SAVEPOINT vec_768")
-        except Exception as e:
-            cursor.execute("ROLLBACK TO SAVEPOINT vec_768")
-            logger.warning("Skipping embedding ALTER to vector(768): %s", e)
+    except Exception as e:
+        logger.warning("Skipping embedding ALTER to vector(768): %s", e)
 
 
 class Migration(migrations.Migration):
