@@ -22,3 +22,5 @@ COPY . .
 RUN python manage.py collectstatic --noinput 2>/dev/null || true
 
 EXPOSE ${PORT:-8000}
+
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120"]
