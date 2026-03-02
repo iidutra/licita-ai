@@ -9,13 +9,18 @@ logger = logging.getLogger(__name__)
 
 
 def try_alter_vector_3072(apps, schema_editor):
-    try:
-        schema_editor.execute(
-            "ALTER TABLE opportunities_documentchunk "
-            "ALTER COLUMN embedding TYPE vector(3072) USING embedding::vector(3072);"
-        )
-    except Exception as e:
-        logger.warning("pgvector not available, skipping embedding ALTER to 3072: %s", e)
+    connection = schema_editor.connection
+    with connection.cursor() as cursor:
+        cursor.execute("SAVEPOINT vec_3072")
+        try:
+            cursor.execute(
+                "ALTER TABLE opportunities_documentchunk "
+                "ALTER COLUMN embedding TYPE vector(3072) USING embedding::vector(3072);"
+            )
+            cursor.execute("RELEASE SAVEPOINT vec_3072")
+        except Exception as e:
+            cursor.execute("ROLLBACK TO SAVEPOINT vec_3072")
+            logger.warning("Skipping embedding ALTER to vector(3072): %s", e)
 
 
 class Migration(migrations.Migration):
