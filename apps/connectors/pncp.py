@@ -163,7 +163,11 @@ class PNCPConnector(BaseConnector):
                     params["uf"] = uf
 
                 try:
-                    data = self._get("/v1/contratacoes/publicacao", params=params)
+                    data = self._get_nocache(
+                        "/v1/contratacoes/publicacao",
+                        params=params,
+                        client=self._consulta_client,
+                    )
                 except Exception:
                     logger.warning("PNCP fetch failed modality=%d (%s) page=%d", modality_id, mod_name, page, exc_info=True)
                     break
