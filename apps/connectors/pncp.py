@@ -99,7 +99,7 @@ class PNCPConnector(BaseConnector):
             description=item.get("informacaoComplementar") or "",
             modality=MODALITY_MAP.get(modalidade_id, "other"),
             number=item.get("numeroCompra") or "",
-            process_number=item.get("numeroProcesso") or "",
+            process_number=item.get("processo") or item.get("numeroProcesso") or "",
             entity_cnpj=orgao.get("cnpj") or "",
             entity_name=orgao.get("razaoSocial") or "",
             entity_uf=unidade.get("ufSigla") or "",
