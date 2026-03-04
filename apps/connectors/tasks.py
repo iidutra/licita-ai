@@ -116,8 +116,11 @@ def monitor_pregoes(self, hours_back: int = 6):
     from .monitoring import detect_changes, persist_events, update_opportunity_from_fresh
 
     now = timezone.now()
-    date_from = (now - timedelta(hours=hours_back)).date()
     date_to = now.date()
+    date_from = (now - timedelta(hours=hours_back)).date()
+    # PNCP API returns 400 when dataInicial == dataFinal
+    if date_from == date_to:
+        date_from = date_to - timedelta(days=1)
 
     logger.info("Monitor pregões: checking updates from %s to %s", date_from, date_to)
 
