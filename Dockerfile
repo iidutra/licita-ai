@@ -23,7 +23,7 @@ RUN mkdir -p /app/staticfiles
 
 RUN python manage.py collectstatic --noinput || true
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY entrypoint.sh entrypoint-worker.sh entrypoint-beat.sh /app/
+RUN chmod +x /app/entrypoint.sh /app/entrypoint-worker.sh /app/entrypoint-beat.sh
 
 CMD ["sh", "/app/entrypoint.sh"]
