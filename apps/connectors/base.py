@@ -71,7 +71,7 @@ class BaseConnector(ABC):
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=2, min=2, max=30),
-        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.ConnectError)),
+        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.ConnectError, httpx.ReadTimeout)),
     )
     def _get(self, path: str, params: dict | None = None) -> dict:
         """GET with throttling, cache, and retry."""
@@ -97,7 +97,7 @@ class BaseConnector(ABC):
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=2, min=2, max=30),
-        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.ConnectError)),
+        retry=retry_if_exception_type((httpx.HTTPStatusError, httpx.ConnectError, httpx.ReadTimeout)),
     )
     def _get_nocache(self, path: str, params: dict | None = None, client: httpx.Client | None = None) -> dict:
         """GET with throttling and retry, but WITHOUT cache (for monitoring)."""

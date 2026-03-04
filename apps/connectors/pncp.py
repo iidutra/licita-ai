@@ -61,7 +61,7 @@ class PNCPConnector(BaseConnector):
         )
         self._consulta_client = httpx.Client(
             base_url=settings.PNCP_CONSULTA_API_BASE_URL,
-            timeout=30.0,
+            timeout=60.0,
             follow_redirects=True,
             headers={"Accept": "application/json", "User-Agent": "LicitaAI/1.0"},
         )
