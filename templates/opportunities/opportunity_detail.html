@@ -8,13 +8,14 @@
 
 {# ===== HEADER ===== #}
 <div class="detail-header">
-  <a href="{% url 'opportunities:list' %}" class="text-muted fs-xs">&larr; Voltar para oportunidades</a>
+  <a href="{% url 'opportunities:list' %}" class="detail-back"><i class="bi bi-arrow-left"></i> Voltar para oportunidades</a>
 
   <div class="d-flex justify-content-between align-items-start mt-2 flex-wrap gap-2">
     <div style="min-width:0;flex:1;">
       <h4 id="opp-title" title="{{ opp.title }}">{{ opp.title }}</h4>
       <div class="detail-subtitle">
-        {{ opp.entity_name }}{% if opp.entity_city %}, {{ opp.entity_city }}{% endif %}{% if opp.entity_uf %} ({{ opp.entity_uf }}){% endif %}
+        <i class="bi bi-building" style="font-size:.8rem;"></i>
+        {{ opp.entity_name }}{% if opp.entity_city %}, {{ opp.entity_city }}{% endif %}{% if opp.entity_uf %} <span class="chip chip-secondary" style="font-size:.62rem;padding:.1rem .4rem;">{{ opp.entity_uf }}</span>{% endif %}
       </div>
       <div class="detail-chips">
         {% for chip in smart_chips %}
@@ -75,24 +76,24 @@
 {# ===== TABS ===== #}
 <ul class="nav la-tabs mb-3 no-print" role="tablist">
   <li class="nav-item" role="presentation">
-    <a class="nav-link active" data-bs-toggle="tab" href="#tab-overview" role="tab" aria-selected="true">Visao Geral</a>
+    <a class="nav-link active" data-bs-toggle="tab" href="#tab-overview" role="tab" aria-selected="true"><i class="bi bi-eye"></i> Visao Geral</a>
   </li>
   <li class="nav-item" role="presentation">
-    <a class="nav-link" data-bs-toggle="tab" href="#tab-checklist" role="tab">Checklist</a>
+    <a class="nav-link" data-bs-toggle="tab" href="#tab-checklist" role="tab"><i class="bi bi-list-check"></i> Checklist</a>
   </li>
   <li class="nav-item" role="presentation">
     <a class="nav-link" data-bs-toggle="tab" href="#tab-risks" role="tab">
-      Riscos{% if risks %} <span class="badge bg-danger" style="font-size:.6rem;">{{ risks|length }}</span>{% endif %}
+      <i class="bi bi-shield-exclamation"></i> Riscos{% if risks %} <span class="badge bg-danger" style="font-size:.6rem;">{{ risks|length }}</span>{% endif %}
     </a>
   </li>
   <li class="nav-item" role="presentation">
-    <a class="nav-link" data-bs-toggle="tab" href="#tab-evidence" role="tab">Evidencias</a>
+    <a class="nav-link" data-bs-toggle="tab" href="#tab-evidence" role="tab"><i class="bi bi-file-earmark-text"></i> Evidencias</a>
   </li>
   <li class="nav-item" role="presentation">
-    <a class="nav-link" data-bs-toggle="tab" href="#tab-items" role="tab">Itens ({{ items|length }})</a>
+    <a class="nav-link" data-bs-toggle="tab" href="#tab-items" role="tab"><i class="bi bi-list-ol"></i> Itens ({{ items|length }})</a>
   </li>
   <li class="nav-item" role="presentation">
-    <a class="nav-link" data-bs-toggle="tab" href="#tab-actions" role="tab">Acoes</a>
+    <a class="nav-link" data-bs-toggle="tab" href="#tab-actions" role="tab"><i class="bi bi-lightning"></i> Acoes</a>
   </li>
 </ul>
 
@@ -102,26 +103,26 @@
   <div class="tab-pane fade show active" id="tab-overview" role="tabpanel">
     {# Dados do Edital #}
     <div class="la-section">
-      <div class="la-section-title">Dados do Edital</div>
+      <div class="la-section-title"><i class="bi bi-file-text"></i> Dados do Edital</div>
       <div class="row">
         <div class="col-md-6">
-          <table class="table table-sm mb-0" style="font-size:.82rem;">
-            <tr><td class="fw-semibold text-muted" style="width:140px">Modalidade</td><td>{{ opp.get_modality_display }}</td></tr>
-            <tr><td class="fw-semibold text-muted">Numero</td><td>{{ opp.number|default:"\u2014" }}</td></tr>
-            <tr><td class="fw-semibold text-muted">Processo</td><td>{{ opp.process_number|default:"\u2014" }}</td></tr>
-            <tr><td class="fw-semibold text-muted">CNPJ</td><td>{{ opp.entity_cnpj }}</td></tr>
-            <tr><td class="fw-semibold text-muted">UASG</td><td>{{ opp.uasg_code|default:"\u2014" }}</td></tr>
-            <tr><td class="fw-semibold text-muted">SRP</td><td>{{ opp.is_srp|yesno:"Sim,Nao" }}</td></tr>
+          <table class="data-table">
+            <tr><td class="data-label">Modalidade</td><td class="data-value">{{ opp.get_modality_display }}</td></tr>
+            <tr><td class="data-label">Numero</td><td class="data-value">{{ opp.number|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">Processo</td><td class="data-value">{{ opp.process_number|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">CNPJ</td><td class="data-value">{{ opp.entity_cnpj }}</td></tr>
+            <tr><td class="data-label">UASG</td><td class="data-value">{{ opp.uasg_code|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">SRP</td><td class="data-value">{{ opp.is_srp|yesno:"Sim,Nao" }}</td></tr>
           </table>
         </div>
         <div class="col-md-6">
-          <table class="table table-sm mb-0" style="font-size:.82rem;">
-            <tr><td class="fw-semibold text-muted" style="width:140px">Publicacao</td><td>{{ opp.published_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
-            <tr><td class="fw-semibold text-muted">Abertura</td><td>{{ opp.proposals_open_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
-            <tr><td class="fw-semibold text-muted">Encerramento</td><td>{{ opp.proposals_close_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
-            <tr><td class="fw-semibold text-muted">Prazo Final</td><td>{{ opp.deadline|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+          <table class="data-table">
+            <tr><td class="data-label">Publicacao</td><td class="data-value">{{ opp.published_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">Abertura</td><td class="data-value">{{ opp.proposals_open_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">Encerramento</td><td class="data-value">{{ opp.proposals_close_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">Prazo Final</td><td class="data-value">{{ opp.deadline|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
             {% if opp.link %}
-            <tr><td class="fw-semibold text-muted">Origem</td><td><a href="{{ opp.link }}" target="_blank" rel="noopener">Abrir <i class="bi bi-box-arrow-up-right" style="font-size:.7rem;"></i></a></td></tr>
+            <tr><td class="data-label">Origem</td><td class="data-value"><a href="{{ opp.link }}" target="_blank" rel="noopener">Abrir no portal <i class="bi bi-box-arrow-up-right" style="font-size:.7rem;"></i></a></td></tr>
             {% endif %}
           </table>
         </div>
@@ -130,9 +131,9 @@
 
     {# Descricao #}
     {% if opp.description %}
-    <div class="la-section">
-      <div class="la-section-title">Objeto / Descricao</div>
-      <p class="mb-0" style="font-size:.85rem;color:#334155;">{{ opp.description }}</p>
+    <div class="la-section" style="background:#f8fafc;">
+      <div class="la-section-title"><i class="bi bi-text-paragraph"></i> Objeto / Descricao</div>
+      <p class="mb-0" style="font-size:.88rem;color:#334155;line-height:1.7;">{{ opp.description }}</p>
     </div>
     {% endif %}
 
@@ -142,19 +143,19 @@
     {# Matches #}
     {% if matches %}
     <div class="la-section">
-      <div class="la-section-title">Matching com Clientes</div>
-      <table class="table table-sm mb-0" style="font-size:.82rem;">
-        <thead><tr><th>Cliente</th><th>Score</th><th>Justificativa</th></tr></thead>
+      <div class="la-section-title"><i class="bi bi-arrow-left-right"></i> Matching com Clientes</div>
+      <table class="data-table">
+        <thead><tr><th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Cliente</th><th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Score</th><th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Justificativa</th></tr></thead>
         <tbody>
           {% for m in matches %}
           <tr>
-            <td><a href="{% url 'clients:detail' m.client.pk %}">{{ m.client.name }}</a></td>
-            <td>
+            <td class="data-value"><a href="{% url 'clients:detail' m.client.pk %}">{{ m.client.name }}</a></td>
+            <td class="data-value">
               <span class="{% if m.score >= 70 %}score-high{% elif m.score >= 40 %}score-mid{% else %}score-low{% endif %}">
                 {{ m.score }}/100
               </span>
             </td>
-            <td class="text-muted">{{ m.justification|truncatewords:30 }}</td>
+            <td class="data-value" style="color:#64748b;">{{ m.justification|truncatewords:30 }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -216,20 +217,28 @@
   {# ===== EVIDENCIAS ===== #}
   <div class="tab-pane fade" id="tab-evidence" role="tabpanel">
     <div class="la-section">
-      <div class="la-section-title">Documentos</div>
-      <table class="table table-sm mb-0" style="font-size:.82rem;">
-        <thead><tr><th>Arquivo</th><th>Tipo</th><th>Status</th><th>Paginas</th><th>OCR</th></tr></thead>
+      <div class="la-section-title"><i class="bi bi-paperclip"></i> Documentos</div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Arquivo</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Tipo</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Status</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Paginas</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">OCR</th>
+          </tr>
+        </thead>
         <tbody>
           {% for doc in documents %}
           <tr>
-            <td>
+            <td class="data-value">
               {{ doc.file_name|default:"\u2014" }}
               {% if doc.original_url %}<a href="{{ doc.original_url }}" target="_blank" rel="noopener" class="ms-1"><i class="bi bi-link-45deg"></i></a>{% endif %}
             </td>
-            <td>{{ doc.doc_type|default:"\u2014" }}</td>
-            <td><span class="badge bg-secondary" style="font-size:.65rem;">{{ doc.get_processing_status_display }}</span></td>
-            <td>{{ doc.page_count|default:"\u2014" }}</td>
-            <td>{{ doc.ocr_used|yesno:"Sim,Nao" }}</td>
+            <td class="data-value">{{ doc.doc_type|default:"\u2014" }}</td>
+            <td class="data-value"><span class="badge bg-secondary" style="font-size:.65rem;">{{ doc.get_processing_status_display }}</span></td>
+            <td class="data-value">{{ doc.page_count|default:"\u2014" }}</td>
+            <td class="data-value">{{ doc.ocr_used|yesno:"Sim,Nao" }}</td>
           </tr>
           {% empty %}
           <tr><td colspan="5">
@@ -247,17 +256,26 @@
   {# ===== ITENS ===== #}
   <div class="tab-pane fade" id="tab-items" role="tabpanel">
     <div class="la-section">
-      <table class="table table-sm mb-0" style="font-size:.82rem;">
-        <thead><tr><th>#</th><th>Descricao</th><th>Qtde</th><th>Unid.</th><th class="text-end">P. Unit. Est.</th><th class="text-end">Total Est.</th></tr></thead>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">#</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Descricao</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Qtde</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Unid.</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;text-align:right;">P. Unit. Est.</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;text-align:right;">Total Est.</th>
+          </tr>
+        </thead>
         <tbody>
           {% for item in items %}
           <tr>
-            <td class="text-muted">{{ item.item_number }}</td>
-            <td>{{ item.description|truncatewords:20 }}</td>
-            <td>{{ item.quantity|default:"\u2014" }}</td>
-            <td>{{ item.unit }}</td>
-            <td class="text-end">{% if item.estimated_unit_price %}R$ {{ item.estimated_unit_price|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
-            <td class="text-end fw-semibold">{% if item.estimated_total %}R$ {{ item.estimated_total|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
+            <td class="data-value" style="color:#94a3b8;">{{ item.item_number }}</td>
+            <td class="data-value">{{ item.description|truncatewords:20 }}</td>
+            <td class="data-value">{{ item.quantity|default:"\u2014" }}</td>
+            <td class="data-value">{{ item.unit }}</td>
+            <td class="data-value" style="text-align:right;">{% if item.estimated_unit_price %}R$ {{ item.estimated_unit_price|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
+            <td class="data-value" style="text-align:right;font-weight:600;">{% if item.estimated_total %}R$ {{ item.estimated_total|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
           </tr>
           {% empty %}
           <tr><td colspan="6">
@@ -277,7 +295,7 @@
     <div class="row g-3">
       <div class="col-md-6">
         <div class="la-section">
-          <div class="la-section-title"><i class="bi bi-robot me-1"></i>Rodar IA</div>
+          <div class="la-section-title"><i class="bi bi-robot"></i> Rodar IA</div>
           <form method="post" action="{% url 'opportunities:run_ai' opp.pk %}">
             {% csrf_token %}
             <div class="mb-3">
@@ -292,7 +310,7 @@
       </div>
       <div class="col-md-6">
         <div class="la-section">
-          <div class="la-section-title"><i class="bi bi-arrow-left-right me-1"></i>Rodar Matching</div>
+          <div class="la-section-title"><i class="bi bi-arrow-left-right"></i> Rodar Matching</div>
           <form method="post" action="{% url 'opportunities:run_matching' opp.pk %}">
             {% csrf_token %}
             <div class="mb-3">

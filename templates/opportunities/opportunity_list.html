@@ -5,16 +5,11 @@
 
 {% block content %}
 {# --- Page header --- #}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h5 class="mb-0 fw-bold">Oportunidades</h5>
-  </div>
-  <div class="d-flex gap-2 align-items-center">
-    <span class="fs-xs text-muted">
-      <strong>{{ total_count }}</strong> total
-      <span class="mx-1">&middot;</span>
-      <strong>{{ new_count }}</strong> novas
-    </span>
+<div class="page-header">
+  <h5><i class="bi bi-search"></i> Oportunidades</h5>
+  <div class="page-header-stats">
+    <span class="page-stat"><strong>{{ total_count }}</strong> total</span>
+    <span class="page-stat"><i class="bi bi-plus-circle text-primary"></i> <strong>{{ new_count }}</strong> novas</span>
   </div>
 </div>
 
@@ -81,8 +76,8 @@
   <a href="{% url 'opportunities:detail' opp.pk %}" class="opp-card">
     <div class="opp-card-title">{{ opp.title|truncatewords:15 }}</div>
     <div class="opp-card-meta">
-      {{ opp.entity_name|truncatewords:6 }}
-      {% if opp.entity_uf %}&middot; {{ opp.entity_uf }}{% endif %}
+      <i class="bi bi-building" style="font-size:.7rem;"></i> {{ opp.entity_name|truncatewords:6 }}
+      {% if opp.entity_uf %}<span class="chip chip-secondary" style="font-size:.62rem;padding:.1rem .4rem;">{{ opp.entity_uf }}</span>{% endif %}
       {% if opp.get_modality_display and opp.modality != 'other' %}&middot; {{ opp.get_modality_display }}{% endif %}
     </div>
     <div class="opp-card-row">
@@ -90,7 +85,7 @@
         {% if opp.estimated_value %}R$ {{ opp.estimated_value|floatformat:0 }}{% else %}&mdash;{% endif %}
       </span>
       <span class="col-date fs-xs">
-        {% if opp.deadline %}{{ opp.deadline|date:"d/m/Y H:i" }}{% else %}&mdash;{% endif %}
+        {% if opp.deadline %}<i class="bi bi-clock" style="font-size:.65rem;"></i> {{ opp.deadline|date:"d/m/Y H:i" }}{% else %}&mdash;{% endif %}
       </span>
       <span class="badge badge-{{ opp.status }}">{{ opp.get_status_display }}</span>
     </div>

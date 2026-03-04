@@ -14,34 +14,78 @@
 </head>
 <body>
   <!-- Sidebar (hidden on mobile via CSS) -->
-  <nav class="sidebar d-none d-md-block" aria-label="Menu principal">
-    <div class="brand">LicitaAI</div>
-    <hr class="border-secondary mx-3">
-    <a href="{% url 'opportunities:list' %}" class="{% if request.resolver_match.app_name == 'opportunities' %}active{% endif %}">
-      <i class="bi bi-briefcase me-2"></i> Oportunidades
-    </a>
-    <a href="{% url 'clients:list' %}" class="{% if request.resolver_match.app_name == 'clients' %}active{% endif %}">
-      <i class="bi bi-people me-2"></i> Clientes
-    </a>
-    <a href="{% url 'admin:index' %}">
-      <i class="bi bi-gear me-2"></i> Admin
-    </a>
-    <hr class="border-secondary mx-3">
-    <form method="post" action="{% url 'logout' %}" class="d-inline">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-link p-0 text-decoration-none" style="color:inherit;">
-        <i class="bi bi-box-arrow-left me-2"></i> Sair
-      </button>
-    </form>
+  <nav class="sidebar d-none d-md-flex" aria-label="Menu principal">
+    <div class="sidebar-brand">
+      <div class="brand-name">
+        <i class="bi bi-briefcase-fill"></i> LicitaAI
+      </div>
+      <div class="brand-sub">Inteligencia em Licitacoes</div>
+    </div>
+
+    <div class="sidebar-nav">
+      <a href="{% url 'opportunities:list' %}" class="{% if request.resolver_match.app_name == 'opportunities' %}active{% endif %}">
+        <i class="bi bi-search"></i> Oportunidades
+      </a>
+      <a href="{% url 'clients:list' %}" class="{% if request.resolver_match.app_name == 'clients' %}active{% endif %}">
+        <i class="bi bi-people"></i> Clientes
+      </a>
+      <a href="{% url 'admin:index' %}">
+        <i class="bi bi-gear"></i> Admin
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      {% if user.is_authenticated %}
+      <div class="d-flex align-items-center gap-2 mb-3" style="font-size:.82rem;color:#94a3b8;">
+        <i class="bi bi-person-circle" style="font-size:1.1rem;"></i>
+        <span>{{ user.get_short_name|default:user.username }}</span>
+      </div>
+      {% endif %}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">
+          <i class="bi bi-box-arrow-left"></i> Sair
+        </button>
+      </form>
+    </div>
   </nav>
 
   <!-- Mobile header (shown < md) -->
-  <div class="d-md-none d-flex align-items-center justify-content-between px-3 py-2" style="background:var(--la-dark);">
-    <span style="color:#60a5fa;font-weight:700;">LicitaAI</span>
-    <div class="d-flex gap-3">
-      <a href="{% url 'opportunities:list' %}" class="text-light small"><i class="bi bi-briefcase"></i></a>
-      <a href="{% url 'clients:list' %}" class="text-light small"><i class="bi bi-people"></i></a>
-      <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-link p-0 text-light small"><i class="bi bi-box-arrow-left"></i></button></form>
+  <div class="d-md-none mobile-header">
+    <span class="mobile-brand"><i class="bi bi-briefcase-fill"></i> LicitaAI</span>
+    <button class="btn btn-link text-light p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-label="Menu">
+      <i class="bi bi-list" style="font-size:1.5rem;"></i>
+    </button>
+  </div>
+
+  <!-- Offcanvas mobile menu -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" style="background:var(--la-dark);color:#e2e8f0;max-width:280px;">
+    <div class="offcanvas-header" style="border-bottom:1px solid rgba(255,255,255,.08);">
+      <h5 class="offcanvas-title" style="color:#60a5fa;font-weight:800;">
+        <i class="bi bi-briefcase-fill me-1"></i> LicitaAI
+      </h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column p-0">
+      <div class="sidebar-nav flex-grow-1">
+        <a href="{% url 'opportunities:list' %}" class="{% if request.resolver_match.app_name == 'opportunities' %}active{% endif %}">
+          <i class="bi bi-search"></i> Oportunidades
+        </a>
+        <a href="{% url 'clients:list' %}" class="{% if request.resolver_match.app_name == 'clients' %}active{% endif %}">
+          <i class="bi bi-people"></i> Clientes
+        </a>
+        <a href="{% url 'admin:index' %}">
+          <i class="bi bi-gear"></i> Admin
+        </a>
+      </div>
+      <div class="sidebar-footer">
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit">
+            <i class="bi bi-box-arrow-left"></i> Sair
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 

@@ -4,93 +4,142 @@
 {% block title %}{{ client.name }} — LicitaAI{% endblock %}
 
 {% block content %}
-<a href="{% url 'clients:list' %}" class="text-muted small">&larr; Voltar</a>
+<a href="{% url 'clients:list' %}" class="detail-back"><i class="bi bi-arrow-left"></i> Voltar para clientes</a>
+
 <div class="d-flex justify-content-between align-items-center mt-2 mb-4">
-  <h4 class="mb-0">{{ client.name }}</h4>
-  <a href="{% url 'clients:edit' client.pk %}" class="btn btn-outline-primary btn-sm">Editar</a>
+  <div>
+    <h4 class="mb-1" style="font-size:1.15rem;">{{ client.name }}</h4>
+    <div style="font-size:.82rem;color:#64748b;">
+      <i class="bi bi-building" style="font-size:.75rem;"></i> {{ client.cnpj }}
+      {% if client.is_active %}
+      <span class="chip chip-success ms-2">Ativo</span>
+      {% else %}
+      <span class="chip chip-secondary ms-2">Inativo</span>
+      {% endif %}
+    </div>
+  </div>
+  <a href="{% url 'clients:edit' client.pk %}" class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-pencil me-1"></i> Editar
+  </a>
 </div>
 
-<div class="row g-4">
+<div class="row g-3">
   <!-- Perfil -->
   <div class="col-md-6">
-    <div class="card">
-      <div class="card-header fw-semibold">Perfil</div>
-      <div class="card-body">
-        <table class="table table-sm mb-0">
-          <tr><td class="fw-semibold" style="width:150px">CNPJ</td><td>{{ client.cnpj }}</td></tr>
-          <tr><td class="fw-semibold">E-mail</td><td>{{ client.email|default:"—" }}</td></tr>
-          <tr><td class="fw-semibold">Telefone</td><td>{{ client.phone|default:"—" }}</td></tr>
-          <tr><td class="fw-semibold">WhatsApp</td><td>{{ client.whatsapp_phone|default:"—" }}{% if client.notify_whatsapp %} <span class="badge bg-success">Ativo</span>{% endif %}</td></tr>
-          <tr><td class="fw-semibold">UFs</td><td>{{ client.regions|join:", "|default:"—" }}</td></tr>
-          <tr><td class="fw-semibold">Palavras-chave</td><td>{{ client.keywords|join:", "|default:"—" }}</td></tr>
-          <tr><td class="fw-semibold">Categorias</td><td>{{ client.categories|join:", "|default:"—" }}</td></tr>
-          <tr><td class="fw-semibold">Margem min.</td><td>{{ client.min_margin_pct }}%</td></tr>
-          <tr><td class="fw-semibold">Valor max.</td><td>{% if client.max_value %}R$ {{ client.max_value|floatformat:2 }}{% else %}Sem limite{% endif %}</td></tr>
-        </table>
-      </div>
+    <div class="la-section">
+      <div class="la-section-title"><i class="bi bi-person-badge"></i> Perfil</div>
+      <table class="data-table">
+        <tr><td class="data-label"><i class="bi bi-envelope" style="font-size:.75rem;margin-right:.3rem;"></i> E-mail</td><td class="data-value">{{ client.email|default:"\u2014" }}</td></tr>
+        <tr><td class="data-label"><i class="bi bi-telephone" style="font-size:.75rem;margin-right:.3rem;"></i> Telefone</td><td class="data-value">{{ client.phone|default:"\u2014" }}</td></tr>
+        <tr><td class="data-label"><i class="bi bi-whatsapp" style="font-size:.75rem;margin-right:.3rem;"></i> WhatsApp</td><td class="data-value">{{ client.whatsapp_phone|default:"\u2014" }}{% if client.notify_whatsapp %} <span class="chip chip-success" style="font-size:.58rem;">Ativo</span>{% endif %}</td></tr>
+        <tr>
+          <td class="data-label"><i class="bi bi-geo-alt" style="font-size:.75rem;margin-right:.3rem;"></i> UFs</td>
+          <td class="data-value">
+            {% for uf in client.regions %}
+            <span class="chip chip-secondary" style="font-size:.65rem;padding:.12rem .45rem;">{{ uf }}</span>
+            {% empty %}&mdash;
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+          <td class="data-label"><i class="bi bi-tag" style="font-size:.75rem;margin-right:.3rem;"></i> Palavras-chave</td>
+          <td class="data-value">
+            {% for kw in client.keywords %}
+            <span class="chip chip-primary" style="font-size:.65rem;padding:.12rem .45rem;">{{ kw }}</span>
+            {% empty %}&mdash;
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+          <td class="data-label"><i class="bi bi-grid" style="font-size:.75rem;margin-right:.3rem;"></i> Categorias</td>
+          <td class="data-value">
+            {% for cat in client.categories %}
+            <span class="chip chip-info" style="font-size:.65rem;padding:.12rem .45rem;">{{ cat }}</span>
+            {% empty %}&mdash;
+            {% endfor %}
+          </td>
+        </tr>
+        <tr><td class="data-label"><i class="bi bi-percent" style="font-size:.75rem;margin-right:.3rem;"></i> Margem min.</td><td class="data-value">{{ client.min_margin_pct }}%</td></tr>
+        <tr><td class="data-label"><i class="bi bi-currency-dollar" style="font-size:.75rem;margin-right:.3rem;"></i> Valor max.</td><td class="data-value">{% if client.max_value %}R$ {{ client.max_value|floatformat:2 }}{% else %}Sem limite{% endif %}</td></tr>
+      </table>
     </div>
   </div>
 
   <!-- Documentos -->
   <div class="col-md-6">
-    <div class="card">
-      <div class="card-header fw-semibold d-flex justify-content-between">
-        Documentos
-        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#addDocForm">+ Adicionar</button>
+    <div class="la-section">
+      <div class="la-section-title d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-folder"></i> Documentos</span>
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#addDocForm" style="font-size:.72rem;">
+          <i class="bi bi-plus"></i> Adicionar
+        </button>
       </div>
-      <div class="card-body">
-        <!-- Form collapse -->
-        <div class="collapse mb-3" id="addDocForm">
-          <form method="post" action="{% url 'clients:add_document' client.pk %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="row g-2">
-              <div class="col-md-4">{{ doc_form.doc_type|add_class:"form-select form-select-sm" }}</div>
-              <div class="col-md-4">{{ doc_form.expires_at|add_class:"form-control form-control-sm" }}</div>
-              <div class="col-md-4">{{ doc_form.status|add_class:"form-select form-select-sm" }}</div>
-              <div class="col-md-8">{{ doc_form.file|add_class:"form-control form-control-sm" }}</div>
-              <div class="col-md-4"><button type="submit" class="btn btn-primary btn-sm w-100">Salvar</button></div>
-            </div>
-          </form>
-          <hr>
-        </div>
 
-        <table class="table table-sm mb-0">
-          <thead><tr><th>Tipo</th><th>Validade</th><th>Status</th></tr></thead>
-          <tbody>
-            {% for doc in documents %}
-            <tr>
-              <td>{{ doc.get_doc_type_display }}</td>
-              <td>{{ doc.expires_at|date:"d/m/Y"|default:"—" }}</td>
-              <td><span class="badge bg-{% if doc.status == 'valid' %}success{% elif doc.status == 'expiring' %}warning{% elif doc.status == 'expired' %}danger{% else %}secondary{% endif %}">{{ doc.get_status_display }}</span></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="3" class="text-muted">Nenhum documento.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <!-- Form collapse -->
+      <div class="collapse mb-3" id="addDocForm">
+        <form method="post" action="{% url 'clients:add_document' client.pk %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row g-2">
+            <div class="col-md-4">{{ doc_form.doc_type|add_class:"form-select form-select-sm" }}</div>
+            <div class="col-md-4">{{ doc_form.expires_at|add_class:"form-control form-control-sm" }}</div>
+            <div class="col-md-4">{{ doc_form.status|add_class:"form-select form-select-sm" }}</div>
+            <div class="col-md-8">{{ doc_form.file|add_class:"form-control form-control-sm" }}</div>
+            <div class="col-md-4"><button type="submit" class="btn btn-primary btn-sm w-100">Salvar</button></div>
+          </div>
+        </form>
+        <hr style="border-color:var(--la-border);">
       </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Tipo</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Validade</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doc in documents %}
+          <tr>
+            <td class="data-value">{{ doc.get_doc_type_display }}</td>
+            <td class="data-value">{{ doc.expires_at|date:"d/m/Y"|default:"\u2014" }}</td>
+            <td class="data-value">
+              <span class="chip chip-{% if doc.status == 'valid' %}success{% elif doc.status == 'expiring' %}warning{% elif doc.status == 'expired' %}danger{% else %}secondary{% endif %}">
+                {{ doc.get_status_display }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="color:#94a3b8;font-size:.85rem;">Nenhum documento.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 
   <!-- Matches -->
   {% if matches %}
   <div class="col-12">
-    <div class="card">
-      <div class="card-header fw-semibold">Matches Recentes</div>
-      <div class="card-body">
-        <table class="table table-sm">
-          <thead><tr><th>Oportunidade</th><th>Score</th><th>Data</th></tr></thead>
-          <tbody>
-            {% for m in matches %}
-            <tr>
-              <td><a href="{% url 'opportunities:detail' m.opportunity.pk %}">{{ m.opportunity.title|truncatewords:12 }}</a></td>
-              <td><span class="{% if m.score >= 70 %}score-high{% elif m.score >= 40 %}score-mid{% else %}score-low{% endif %}">{{ m.score }}/100</span></td>
-              <td>{{ m.created_at|date:"d/m/Y" }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <div class="la-section">
+      <div class="la-section-title"><i class="bi bi-arrow-left-right"></i> Matches Recentes</div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Oportunidade</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Score</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in matches %}
+          <tr>
+            <td class="data-value"><a href="{% url 'opportunities:detail' m.opportunity.pk %}">{{ m.opportunity.title|truncatewords:12 }}</a></td>
+            <td class="data-value"><span class="{% if m.score >= 70 %}score-high{% elif m.score >= 40 %}score-mid{% else %}score-low{% endif %}">{{ m.score }}/100</span></td>
+            <td class="data-value">{{ m.created_at|date:"d/m/Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
   {% endif %}
