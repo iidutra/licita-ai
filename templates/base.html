@@ -27,9 +27,12 @@
       <i class="bi bi-gear me-2"></i> Admin
     </a>
     <hr class="border-secondary mx-3">
-    <a href="{% url 'logout' %}">
-      <i class="bi bi-box-arrow-left me-2"></i> Sair
-    </a>
+    <form method="post" action="{% url 'logout' %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-link p-0 text-decoration-none" style="color:inherit;">
+        <i class="bi bi-box-arrow-left me-2"></i> Sair
+      </button>
+    </form>
   </nav>
 
   <!-- Mobile header (shown < md) -->
@@ -38,7 +41,7 @@
     <div class="d-flex gap-3">
       <a href="{% url 'opportunities:list' %}" class="text-light small"><i class="bi bi-briefcase"></i></a>
       <a href="{% url 'clients:list' %}" class="text-light small"><i class="bi bi-people"></i></a>
-      <a href="{% url 'logout' %}" class="text-light small"><i class="bi bi-box-arrow-left"></i></a>
+      <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-link p-0 text-light small"><i class="bi bi-box-arrow-left"></i></button></form>
     </div>
   </div>
 
