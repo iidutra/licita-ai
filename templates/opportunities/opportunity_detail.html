@@ -110,6 +110,7 @@
             <tr><td class="fw-semibold text-muted">Numero</td><td>{{ opp.number|default:"\u2014" }}</td></tr>
             <tr><td class="fw-semibold text-muted">Processo</td><td>{{ opp.process_number|default:"\u2014" }}</td></tr>
             <tr><td class="fw-semibold text-muted">CNPJ</td><td>{{ opp.entity_cnpj }}</td></tr>
+            <tr><td class="fw-semibold text-muted">UASG</td><td>{{ opp.uasg_code|default:"\u2014" }}</td></tr>
             <tr><td class="fw-semibold text-muted">SRP</td><td>{{ opp.is_srp|yesno:"Sim,Nao" }}</td></tr>
           </table>
         </div>

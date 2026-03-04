@@ -84,6 +84,18 @@ class Opportunity(TimeStampedModel):
 
     # Metadados extras da API (guardamos o JSON bruto)
     raw_data = models.JSONField("Dados brutos da API", default=dict, blank=True)
+
+    @property
+    def uasg_code(self):
+        """Extract UASG code from raw_data (PNCP or Compras.gov)."""
+        if not self.raw_data:
+            return None
+        # PNCP: unidadeOrgao.codigoUnidade
+        unidade = self.raw_data.get("unidadeOrgao", {})
+        if isinstance(unidade, dict) and unidade.get("codigoUnidade"):
+            return unidade["codigoUnidade"]
+        # Compras.gov: unidadeOrgaoCodigoUnidade
+        return self.raw_data.get("unidadeOrgaoCodigoUnidade") or None
     link = models.URLField("Link no sistema de origem", max_length=2000, blank=True)
 
     # Monitoramento
