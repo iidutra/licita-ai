@@ -165,7 +165,7 @@ class PNCPConnector(BaseConnector):
                 try:
                     data = self._get("/v1/contratacoes/publicacao", params=params)
                 except Exception:
-                    logger.warning("PNCP fetch failed modality=%d (%s) page=%d", modality_id, mod_name, page)
+                    logger.warning("PNCP fetch failed modality=%d (%s) page=%d", modality_id, mod_name, page, exc_info=True)
                     break
 
                 items = data.get("data", [])
