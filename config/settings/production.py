@@ -6,7 +6,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = env.list(
     "DJANGO_ALLOWED_HOSTS",
-    default=["*.up.railway.app", "localhost", "127.0.0.1"],
+    default=["*.railway.app", "localhost", "127.0.0.1"],
 )
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
