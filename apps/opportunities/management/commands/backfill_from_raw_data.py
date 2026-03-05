@@ -51,9 +51,23 @@ class Command(BaseCommand):
                 opp.entity_city = str(city)[:200]
                 changed = True
 
+            # link (build PNCP portal link if missing)
+            if not opp.link:
+                link = raw.get("linkSistemaOrigem", "")
+                if not link:
+                    orgao = raw.get("orgaoEntidade", {})
+                    cnpj = orgao.get("cnpj", "") if isinstance(orgao, dict) else ""
+                    ano = raw.get("anoCompra", "")
+                    seq = raw.get("sequencialCompra", "")
+                    if cnpj and ano and seq:
+                        link = f"https://pncp.gov.br/app/editais/{cnpj}/{ano}/{seq}"
+                if link:
+                    opp.link = link[:500]
+                    changed = True
+
             if changed:
                 opp.save(update_fields=[
-                    "process_number", "number", "entity_uf", "entity_city",
+                    "process_number", "number", "entity_uf", "entity_city", "link",
                 ])
                 updated += 1
 

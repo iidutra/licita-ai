@@ -86,6 +86,15 @@ class PNCPConnector(BaseConnector):
         seq = item.get("sequencialCompra", "")
         return f"pncp:{cnpj}:{ano}:{seq}"
 
+    def _build_pncp_link(self, item: dict) -> str:
+        """Build PNCP portal link when linkSistemaOrigem is absent."""
+        cnpj = item.get("orgaoEntidade", {}).get("cnpj", "")
+        ano = item.get("anoCompra", "")
+        seq = item.get("sequencialCompra", "")
+        if cnpj and ano and seq:
+            return f"https://pncp.gov.br/app/editais/{cnpj}/{ano}/{seq}"
+        return ""
+
     def _normalize(self, item: dict) -> NormalizedOpportunity:
         """Normalize a PNCP contratacao to our internal format."""
         orgao = item.get("orgaoEntidade", {})
@@ -113,7 +122,7 @@ class PNCPConnector(BaseConnector):
             estimated_value=item.get("valorTotalEstimado"),
             awarded_value=item.get("valorTotalHomologado"),
             is_srp=bool(item.get("srp", False)),
-            link=item.get("linkSistemaOrigem") or "",
+            link=item.get("linkSistemaOrigem") or self._build_pncp_link(item),
             raw_data=item,
         )
 
