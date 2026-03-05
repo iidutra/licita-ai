@@ -61,6 +61,15 @@ class ComprasGovConnector(BaseConnector):
         except (ValueError, AttributeError):
             return dt_str
 
+    def _build_pncp_link(self, item: dict) -> str:
+        """Build PNCP portal link from Compras.gov data."""
+        cnpj = item.get("orgaoEntidadeCnpj", "")
+        ano = item.get("anoCompra", "")
+        seq = item.get("sequencialCompra", "")
+        if cnpj and ano and seq:
+            return f"https://pncp.gov.br/app/editais/{cnpj}/{ano}/{seq}"
+        return ""
+
     def _normalize(self, item: dict) -> NormalizedOpportunity:
         """Normalize Compras.gov data to internal format."""
         modalidade_id = item.get("modalidadeIdPncp", 0)
@@ -87,7 +96,7 @@ class ComprasGovConnector(BaseConnector):
             estimated_value=item.get("valorTotalEstimado"),
             awarded_value=item.get("valorTotalHomologado"),
             is_srp=bool(item.get("srp", False)),
-            link=item.get("linkSistemaOrigem", ""),
+            link=item.get("linkSistemaOrigem") or self._build_pncp_link(item),
             raw_data=item,
         )
 

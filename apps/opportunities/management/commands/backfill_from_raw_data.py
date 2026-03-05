@@ -55,8 +55,9 @@ class Command(BaseCommand):
             if not opp.link:
                 link = raw.get("linkSistemaOrigem", "")
                 if not link:
+                    # PNCP format: orgaoEntidade.cnpj / Compras.gov format: orgaoEntidadeCnpj
                     orgao = raw.get("orgaoEntidade", {})
-                    cnpj = orgao.get("cnpj", "") if isinstance(orgao, dict) else ""
+                    cnpj = (orgao.get("cnpj", "") if isinstance(orgao, dict) else "") or raw.get("orgaoEntidadeCnpj", "")
                     ano = raw.get("anoCompra", "")
                     seq = raw.get("sequencialCompra", "")
                     if cnpj and ano and seq:
