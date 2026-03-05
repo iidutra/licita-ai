@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load widget_tweaks %}
+{% load widget_tweaks formatting %}
 
 {% block title %}Oportunidades — LicitaAI{% endblock %}
 
@@ -44,7 +44,7 @@
             {% if opp.entity_uf %}<span class="chip chip-secondary">{{ opp.entity_uf }}</span>{% else %}&mdash;{% endif %}
           </td>
           <td class="col-value">
-            {% if opp.estimated_value %}R$ {{ opp.estimated_value|floatformat:0 }}{% else %}&mdash;{% endif %}
+            {% if opp.estimated_value %}{{ opp.estimated_value|format_currency }}{% else %}&mdash;{% endif %}
           </td>
           <td class="col-date">
             {% if opp.deadline %}{{ opp.deadline|date:"d/m/Y" }}<br><span class="fs-xs text-muted">{{ opp.deadline|date:"H:i" }}</span>{% else %}&mdash;{% endif %}
@@ -82,7 +82,7 @@
     </div>
     <div class="opp-card-row">
       <span class="opp-card-value">
-        {% if opp.estimated_value %}R$ {{ opp.estimated_value|floatformat:0 }}{% else %}&mdash;{% endif %}
+        {% if opp.estimated_value %}{{ opp.estimated_value|format_currency }}{% else %}&mdash;{% endif %}
       </span>
       <span class="col-date fs-xs">
         {% if opp.deadline %}<i class="bi bi-clock" style="font-size:.65rem;"></i> {{ opp.deadline|date:"d/m/Y H:i" }}{% else %}&mdash;{% endif %}
