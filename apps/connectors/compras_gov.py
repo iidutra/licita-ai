@@ -64,8 +64,8 @@ class ComprasGovConnector(BaseConnector):
     def _build_pncp_link(self, item: dict) -> str:
         """Build PNCP portal link from Compras.gov data."""
         cnpj = item.get("orgaoEntidadeCnpj", "")
-        ano = item.get("anoCompra", "")
-        seq = item.get("sequencialCompra", "")
+        ano = item.get("anoCompraPncp", "") or item.get("anoCompra", "")
+        seq = item.get("sequencialCompraPncp", "") or item.get("sequencialCompra", "")
         if cnpj and ano and seq:
             return f"https://pncp.gov.br/app/editais/{cnpj}/{ano}/{seq}"
         return ""

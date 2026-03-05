@@ -58,8 +58,8 @@ class Command(BaseCommand):
                     # PNCP format: orgaoEntidade.cnpj / Compras.gov format: orgaoEntidadeCnpj
                     orgao = raw.get("orgaoEntidade", {})
                     cnpj = (orgao.get("cnpj", "") if isinstance(orgao, dict) else "") or raw.get("orgaoEntidadeCnpj", "")
-                    ano = raw.get("anoCompra", "")
-                    seq = raw.get("sequencialCompra", "")
+                    ano = raw.get("anoCompra", "") or raw.get("anoCompraPncp", "")
+                    seq = raw.get("sequencialCompra", "") or raw.get("sequencialCompraPncp", "")
                     if cnpj and ano and seq:
                         link = f"https://pncp.gov.br/app/editais/{cnpj}/{ano}/{seq}"
                 if link:
