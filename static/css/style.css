@@ -310,15 +310,77 @@ h1,h2,h3,h4,h5,h6 { color: var(--la-dark); font-weight: 700; }
    Responsive
    ================================================================= */
 @media (max-width: 767.98px) {
-  .sidebar { display: none; }
-  .main-content { margin-left: 0; padding: 1rem; }
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
-  .countdown { flex-direction: column; align-items: flex-start; gap: .6rem; }
-  .countdown-digits { gap: .75rem; }
-  .la-tabs { overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; }
-  .la-tabs .nav-item { flex-shrink: 0; }
-  .detail-header h4 { font-size: 1rem; }
+  /* Layout */
+  .sidebar { display: none !important; }
+  .main-content { margin-left: 0; padding: .75rem; }
+
+  /* Page header */
   .page-header { flex-direction: column; align-items: flex-start; gap: .5rem; }
+
+  /* KPI */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  .kpi-card { padding: .75rem .85rem; gap: .6rem; }
+  .kpi-icon { font-size: 1.2rem; }
+  .kpi-value { font-size: 1.1rem; }
+
+  /* Countdown */
+  .countdown { flex-direction: column; align-items: flex-start; gap: .6rem; padding: .75rem 1rem; }
+  .countdown-digits { gap: .75rem; }
+  .cd-num { font-size: 1.2rem; }
+
+  /* Tabs */
+  .la-tabs { overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .la-tabs .nav-item { flex-shrink: 0; }
+  .la-tabs .nav-link { padding: .5rem .7rem; font-size: .78rem; }
+
+  /* Detail header */
+  .detail-header h4 { font-size: .95rem; }
+  .detail-subtitle { font-size: .78rem; }
+  .detail-chips { gap: .25rem; }
+  .detail-chips .chip { font-size: .62rem; }
+  .detail-actions { flex-direction: column; width: 100%; gap: .4rem; }
+  .detail-actions .form-select, .detail-actions .btn { width: 100%; }
+
+  /* Sections & cards */
+  .la-section { padding: .85rem .95rem; margin-bottom: .75rem; }
+  .la-card { border-radius: .5rem; }
+
+  /* Tables */
+  .data-table { font-size: .8rem; }
+  .data-table .data-label { width: 110px; font-size: .75rem; }
+  .la-table { font-size: .78rem; }
+  .la-table thead th { padding: .5rem .6rem; font-size: .65rem; }
+  .la-table tbody td { padding: .55rem .6rem; }
+
+  /* Detail page tables — stack on mobile */
+  .tab-pane .row > .col-md-6 { margin-bottom: .5rem; }
+
+  /* Actions */
+  .tab-pane .row.g-3 > .col-md-6 { margin-bottom: .75rem; }
+
+  /* Risk cards */
+  .risk-card { padding: .75rem .85rem; }
+
+  /* Checklist */
+  .chk-item { padding: .4rem .5rem; }
+
+  /* Mobile cards (opportunity list) */
+  .opp-card { padding: .85rem 1rem; margin-bottom: .5rem; }
+  .opp-card-title { font-size: .82rem; }
+  .opp-card-meta { font-size: .7rem; }
+  .opp-card-row { font-size: .75rem; }
+
+  /* Filters */
+  .filter-bar { padding: .7rem .85rem; }
+
+  /* Pagination */
+  .la-pagination .page-link { font-size: .72rem; padding: .3rem .55rem; }
+
+  /* Buttons */
+  .btn-sm { font-size: .75rem; padding: .3rem .6rem; }
+
+  /* Offcanvas mobile menu */
+  .offcanvas .sidebar-nav a { padding: .65rem 1.15rem; font-size: .88rem; }
 }
 
 /* =================================================================

@@ -6,7 +6,7 @@
 {% block content %}
 <a href="{% url 'clients:list' %}" class="detail-back"><i class="bi bi-arrow-left"></i> Voltar para clientes</a>
 
-<div class="d-flex justify-content-between align-items-center mt-2 mb-4">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mt-2 mb-4 gap-2">
   <div>
     <h4 class="mb-1" style="font-size:1.15rem;">{{ client.name }}</h4>
     <div style="font-size:.82rem;color:#64748b;">
