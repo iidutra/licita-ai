@@ -29,9 +29,9 @@
     <div class="la-section">
       <div class="la-section-title"><i class="bi bi-person-badge"></i> Perfil</div>
       <table class="data-table">
-        <tr><td class="data-label"><i class="bi bi-envelope" style="font-size:.75rem;margin-right:.3rem;"></i> E-mail</td><td class="data-value">{{ client.email|default:"\u2014" }}</td></tr>
-        <tr><td class="data-label"><i class="bi bi-telephone" style="font-size:.75rem;margin-right:.3rem;"></i> Telefone</td><td class="data-value">{{ client.phone|default:"\u2014" }}</td></tr>
-        <tr><td class="data-label"><i class="bi bi-whatsapp" style="font-size:.75rem;margin-right:.3rem;"></i> WhatsApp</td><td class="data-value">{{ client.whatsapp_phone|default:"\u2014" }}{% if client.notify_whatsapp %} <span class="chip chip-success" style="font-size:.58rem;">Ativo</span>{% endif %}</td></tr>
+        <tr><td class="data-label"><i class="bi bi-envelope" style="font-size:.75rem;margin-right:.3rem;"></i> E-mail</td><td class="data-value">{{ client.email|default:"—" }}</td></tr>
+        <tr><td class="data-label"><i class="bi bi-telephone" style="font-size:.75rem;margin-right:.3rem;"></i> Telefone</td><td class="data-value">{{ client.phone|default:"—" }}</td></tr>
+        <tr><td class="data-label"><i class="bi bi-whatsapp" style="font-size:.75rem;margin-right:.3rem;"></i> WhatsApp</td><td class="data-value">{{ client.whatsapp_phone|default:"—" }}{% if client.notify_whatsapp %} <span class="chip chip-success" style="font-size:.58rem;">Ativo</span>{% endif %}</td></tr>
         <tr>
           <td class="data-label"><i class="bi bi-geo-alt" style="font-size:.75rem;margin-right:.3rem;"></i> UFs</td>
           <td class="data-value">
@@ -102,7 +102,7 @@
           {% for doc in documents %}
           <tr>
             <td class="data-value">{{ doc.get_doc_type_display }}</td>
-            <td class="data-value">{{ doc.expires_at|date:"d/m/Y"|default:"\u2014" }}</td>
+            <td class="data-value">{{ doc.expires_at|date:"d/m/Y"|default:"—" }}</td>
             <td class="data-value">
               <span class="chip chip-{% if doc.status == 'valid' %}success{% elif doc.status == 'expiring' %}warning{% elif doc.status == 'expired' %}danger{% else %}secondary{% endif %}">
                 {{ doc.get_status_display }}

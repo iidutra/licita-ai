@@ -72,13 +72,13 @@
   <div class="section-title">Dados do Edital</div>
   <table>
     <tr><td style="width:140px;font-weight:600;">Modalidade</td><td>{{ opp.get_modality_display }}</td></tr>
-    <tr><td style="font-weight:600;">Numero</td><td>{{ opp.number|default:"\u2014" }}</td></tr>
-    <tr><td style="font-weight:600;">Processo</td><td>{{ opp.process_number|default:"\u2014" }}</td></tr>
+    <tr><td style="font-weight:600;">Numero</td><td>{{ opp.number|default:"—" }}</td></tr>
+    <tr><td style="font-weight:600;">Processo</td><td>{{ opp.process_number|default:"—" }}</td></tr>
     <tr><td style="font-weight:600;">CNPJ</td><td>{{ opp.entity_cnpj }}</td></tr>
-    <tr><td style="font-weight:600;">Publicacao</td><td>{{ opp.published_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
-    <tr><td style="font-weight:600;">Abertura</td><td>{{ opp.proposals_open_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
-    <tr><td style="font-weight:600;">Encerramento</td><td>{{ opp.proposals_close_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
-    <tr><td style="font-weight:600;">Prazo Final</td><td>{{ opp.deadline|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+    <tr><td style="font-weight:600;">Publicacao</td><td>{{ opp.published_at|date:"d/m/Y H:i"|default:"—" }}</td></tr>
+    <tr><td style="font-weight:600;">Abertura</td><td>{{ opp.proposals_open_at|date:"d/m/Y H:i"|default:"—" }}</td></tr>
+    <tr><td style="font-weight:600;">Encerramento</td><td>{{ opp.proposals_close_at|date:"d/m/Y H:i"|default:"—" }}</td></tr>
+    <tr><td style="font-weight:600;">Prazo Final</td><td>{{ opp.deadline|date:"d/m/Y H:i"|default:"—" }}</td></tr>
   </table>
 </div>
 
@@ -133,7 +133,7 @@
       <tr>
         <td>{{ item.item_number }}</td>
         <td>{{ item.description|truncatewords:25 }}</td>
-        <td>{{ item.quantity|default:"\u2014" }}</td>
+        <td>{{ item.quantity|default:"—" }}</td>
         <td>{{ item.unit }}</td>
         <td style="text-align:right">{% if item.estimated_unit_price %}R$ {{ item.estimated_unit_price|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
         <td style="text-align:right">{% if item.estimated_total %}R$ {{ item.estimated_total|floatformat:2 }}{% else %}&mdash;{% endif %}</td>

@@ -108,16 +108,16 @@
         <div class="col-md-6">
           <table class="data-table">
             <tr><td class="data-label">Modalidade</td><td class="data-value">{{ opp.get_modality_display }}</td></tr>
-            <tr><td class="data-label">Numero</td><td class="data-value">{{ opp.number|default:"\u2014" }}</td></tr>
-            <tr><td class="data-label">Processo</td><td class="data-value">{{ opp.process_number|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">Numero</td><td class="data-value">{{ opp.number|default:"—" }}</td></tr>
+            <tr><td class="data-label">Processo</td><td class="data-value">{{ opp.process_number|default:"—" }}</td></tr>
             <tr><td class="data-label">CNPJ</td><td class="data-value">{{ opp.entity_cnpj|format_cnpj }}</td></tr>
-            <tr><td class="data-label">UASG</td><td class="data-value">{{ opp.uasg_code|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">UASG</td><td class="data-value">{{ opp.uasg_code|default:"—" }}</td></tr>
             <tr><td class="data-label">SRP</td><td class="data-value">{{ opp.is_srp|yesno:"Sim,Nao" }}</td></tr>
           </table>
         </div>
         <div class="col-md-6">
           <table class="data-table">
-            <tr><td class="data-label">Publicacao</td><td class="data-value">{{ opp.published_at|date:"d/m/Y H:i"|default:"\u2014" }}</td></tr>
+            <tr><td class="data-label">Publicacao</td><td class="data-value">{{ opp.published_at|date:"d/m/Y H:i"|default:"—" }}</td></tr>
             <tr><td class="data-label">Abertura</td><td class="data-value">{% if opp.proposals_open_at %}{{ opp.proposals_open_at|date:"d/m/Y H:i" }}{% elif opp.modality == 'dispensa' or opp.modality == 'inexigibilidade' %}<span style="color:#94a3b8;font-size:.82rem;">Nao se aplica</span>{% else %}&mdash;{% endif %}</td></tr>
             <tr><td class="data-label">Encerramento</td><td class="data-value">{% if opp.proposals_close_at %}{{ opp.proposals_close_at|date:"d/m/Y H:i" }}{% elif opp.modality == 'dispensa' or opp.modality == 'inexigibilidade' %}<span style="color:#94a3b8;font-size:.82rem;">Nao se aplica</span>{% else %}&mdash;{% endif %}</td></tr>
             <tr><td class="data-label">Prazo Final</td><td class="data-value">{% if opp.deadline %}{{ opp.deadline|date:"d/m/Y H:i" }}{% elif opp.modality == 'dispensa' or opp.modality == 'inexigibilidade' %}<span style="color:#94a3b8;font-size:.82rem;">Nao se aplica</span>{% else %}&mdash;{% endif %}</td></tr>
@@ -238,16 +238,16 @@
                 <i class="bi bi-box-arrow-up-right ms-1" style="font-size:.6rem;"></i>
               </a>
               {% else %}
-              <i class="bi bi-file-earmark me-1" style="font-size:.8rem;color:#94a3b8;"></i>{{ doc.file_name|default:doc.doc_type|default:"\u2014" }}
+              <i class="bi bi-file-earmark me-1" style="font-size:.8rem;color:#94a3b8;"></i>{{ doc.file_name|default:doc.doc_type|default:"—" }}
               {% endif %}
             </td>
-            <td class="data-value">{{ doc.doc_type|default:"\u2014" }}</td>
+            <td class="data-value">{{ doc.doc_type|default:"—" }}</td>
             <td class="data-value">
               <span class="chip chip-{% if doc.processing_status == 'indexed' %}success{% elif doc.processing_status == 'failed' %}danger{% elif doc.processing_status == 'pending' %}warning{% else %}info{% endif %}">
                 {{ doc.get_processing_status_display }}
               </span>
             </td>
-            <td class="data-value">{{ doc.page_count|default:"\u2014" }}</td>
+            <td class="data-value">{{ doc.page_count|default:"—" }}</td>
             <td class="data-value">{{ doc.ocr_used|yesno:"Sim,Nao" }}</td>
           </tr>
           {% empty %}
@@ -282,7 +282,7 @@
           <tr>
             <td class="data-value" style="color:#94a3b8;">{{ item.item_number }}</td>
             <td class="data-value">{{ item.description|truncatewords:20 }}</td>
-            <td class="data-value">{{ item.quantity|default:"\u2014" }}</td>
+            <td class="data-value">{{ item.quantity|default:"—" }}</td>
             <td class="data-value">{{ item.unit }}</td>
             <td class="data-value" style="text-align:right;">{% if item.estimated_unit_price %}R$ {{ item.estimated_unit_price|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
             <td class="data-value" style="text-align:right;font-weight:600;">{% if item.estimated_total %}R$ {{ item.estimated_total|floatformat:2 }}{% else %}&mdash;{% endif %}</td>
