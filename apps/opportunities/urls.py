@@ -10,6 +10,7 @@ urlpatterns = [
     path("<uuid:pk>/", views.OpportunityDetailView.as_view(), name="detail"),
     path("<uuid:pk>/run-ai/", views.RunAIView.as_view(), name="run_ai"),
     path("<uuid:pk>/run-matching/", views.RunMatchingView.as_view(), name="run_matching"),
+    path("<uuid:pk>/reprocess-docs/", views.ReprocessDocumentsView.as_view(), name="reprocess_docs"),
     path("<uuid:pk>/change-status/", views.ChangeStatusView.as_view(), name="change_status"),
     path("<uuid:pk>/export-pdf/", views.ExportPDFView.as_view(), name="export_pdf"),
 ]

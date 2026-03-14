@@ -141,6 +141,36 @@ class RunAIView(LoginRequiredMixin, View):
         return redirect("opportunities:detail", pk=pk)
 
 
+class ReprocessDocumentsView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        opp = get_object_or_404(Opportunity, pk=pk)
+        from .models import OpportunityDocument
+        from .tasks import download_single_document, extract_document_text
+
+        requeued = 0
+        for doc in opp.documents.exclude(
+            processing_status=OpportunityDocument.ProcessingStatus.INDEXED
+        ):
+            if doc.processing_status in (
+                OpportunityDocument.ProcessingStatus.DOWNLOADED,
+                OpportunityDocument.ProcessingStatus.EXTRACTING,
+            ):
+                extract_document_text.delay(str(doc.pk))
+                requeued += 1
+            elif doc.original_url:
+                doc.processing_status = OpportunityDocument.ProcessingStatus.PENDING
+                doc.error_message = ""
+                doc.save(update_fields=["processing_status", "error_message", "updated_at"])
+                download_single_document.delay(str(doc.pk))
+                requeued += 1
+
+        if requeued:
+            messages.success(request, f"{requeued} documento(s) enfileirado(s) para reprocessamento.")
+        else:
+            messages.info(request, "Todos os documentos ja estao indexados.")
+        return redirect("opportunities:detail", pk=pk)
+
+
 class RunMatchingView(LoginRequiredMixin, View):
     def post(self, request, pk):
         opp = get_object_or_404(Opportunity, pk=pk)

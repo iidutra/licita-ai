@@ -1,10 +1,9 @@
 """Celery tasks — document download and processing."""
+import hashlib
 import logging
 
 import httpx
 from celery import shared_task
-
-from apps.core.storage import compute_file_hash
 
 from .models import Opportunity, OpportunityDocument
 
@@ -46,14 +45,23 @@ def download_single_document(self, document_id: str):
     doc.processing_status = OpportunityDocument.ProcessingStatus.DOWNLOADING
     doc.save(update_fields=["processing_status", "updated_at"])
 
-    try:
-        resp = httpx.get(doc.original_url, timeout=60, follow_redirects=True)
-        resp.raise_for_status()
+    max_file_size = 200 * 1024 * 1024  # 200 MB
 
-        content = resp.content
-        file_hash = compute_file_hash(
-            type("FakeFile", (), {"seek": lambda self, n: None, "read": lambda self, n=None: content})()
-        )
+    try:
+        with httpx.stream("GET", doc.original_url, timeout=60, follow_redirects=True) as resp:
+            resp.raise_for_status()
+
+            chunks = []
+            total = 0
+            content_type = resp.headers.get("content-type", "")
+            for chunk in resp.iter_bytes(chunk_size=65536):
+                total += len(chunk)
+                if total > max_file_size:
+                    raise ValueError(f"File exceeds {max_file_size // (1024*1024)} MB limit")
+                chunks.append(chunk)
+
+        content = b"".join(chunks)
+        file_hash = hashlib.sha256(content).hexdigest()
 
         # Skip if already downloaded (idempotent by hash)
         if OpportunityDocument.objects.filter(file_hash=file_hash).exclude(pk=doc.pk).exists():
@@ -65,7 +73,6 @@ def download_single_document(self, document_id: str):
 
         # Determine filename
         filename = doc.file_name or doc.original_url.split("/")[-1] or f"{file_hash[:12]}.pdf"
-        content_type = resp.headers.get("content-type", "")
 
         from django.core.files.base import ContentFile
         doc.file.save(filename, ContentFile(content), save=False)

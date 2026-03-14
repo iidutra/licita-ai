@@ -317,6 +317,16 @@
             </button>
           </form>
         </div>
+        <div class="la-section mt-3">
+          <div class="la-section-title"><i class="bi bi-arrow-repeat"></i> Reprocessar Documentos</div>
+          <p style="font-size:.8rem;color:#64748b;">Reenfileira download e indexacao de documentos pendentes ou com falha.</p>
+          <form method="post" action="{% url 'opportunities:reprocess_docs' opp.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-warning btn-sm">
+              <i class="bi bi-arrow-repeat me-1"></i>Reprocessar
+            </button>
+          </form>
+        </div>
       </div>
       <div class="col-md-6">
         <div class="la-section">
