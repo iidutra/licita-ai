@@ -15,7 +15,10 @@ def _get_client():
     global _client
     if _client is None:
         import google.generativeai as genai
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        genai.configure(
+            api_key=settings.GEMINI_API_KEY,
+            transport="rest",
+        )
         _client = genai
     return _client
 

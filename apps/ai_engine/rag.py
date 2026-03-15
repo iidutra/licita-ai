@@ -19,7 +19,10 @@ def _get_model():
     global _model
     if _model is None:
         import google.generativeai as genai
-        genai.configure(api_key=settings.GEMINI_API_KEY)
+        genai.configure(
+            api_key=settings.GEMINI_API_KEY,
+            transport="rest",  # Use REST instead of gRPC (avoids hangs in containers)
+        )
         _model = genai.GenerativeModel(
             settings.GEMINI_MODEL,
             generation_config=genai.GenerationConfig(
