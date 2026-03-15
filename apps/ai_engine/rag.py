@@ -97,11 +97,55 @@ def run_extraction(opportunity: Opportunity) -> AISummary:
 
     if not chunks:
         # Fallback: get chunks directly from documents (no vector search)
-        chunks = list(
-            DocumentChunk.objects.filter(
-                document__opportunity=opportunity,
-            ).select_related("document").order_by("document", "chunk_index")[:30]
+        # Strategy: prioritize chunks with relevant keywords, then fill with
+        # evenly spaced chunks to cover the full document.
+        from django.db.models import Q
+
+        base_qs = DocumentChunk.objects.filter(
+            document__opportunity=opportunity,
+        ).select_related("document")
+
+        MAX_CHUNKS = 30
+        KEYWORD_LIMIT = 20
+
+        # 1) Find chunks containing relevant keywords (habilitação, risks, etc.)
+        keywords = [
+            "habilitação", "qualificação", "fiscal", "técnica", "jurídica",
+            "econômica", "risco", "penalidade", "garantia", "pagamento",
+            "prazo", "subcontratação", "amostra", "visita",
+        ]
+        keyword_filter = Q()
+        for kw in keywords:
+            keyword_filter |= Q(content__icontains=kw)
+
+        keyword_chunks = list(
+            base_qs.filter(keyword_filter)
+            .order_by("document", "chunk_index")[:KEYWORD_LIMIT]
         )
+        keyword_ids = {c.pk for c in keyword_chunks}
+
+        # 2) Fill remaining slots with evenly spaced chunks across the document
+        remaining_slots = MAX_CHUNKS - len(keyword_chunks)
+        spaced_chunks = []
+        if remaining_slots > 0:
+            all_chunk_ids = list(
+                base_qs.exclude(pk__in=keyword_ids)
+                .order_by("document", "chunk_index")
+                .values_list("pk", flat=True)
+            )
+            if all_chunk_ids:
+                total = len(all_chunk_ids)
+                if total <= remaining_slots:
+                    selected_ids = all_chunk_ids
+                else:
+                    step = total / remaining_slots
+                    selected_ids = [all_chunk_ids[int(i * step)] for i in range(remaining_slots)]
+                spaced_chunks = list(
+                    base_qs.filter(pk__in=selected_ids)
+                    .order_by("document", "chunk_index")
+                )
+
+        chunks = keyword_chunks + spaced_chunks
 
     chunks_text = "\n\n---\n\n".join(
         f"[Documento: {c.document.file_name}, Página: {c.page_number}]\n{c.content}"
