@@ -101,12 +101,27 @@ def download_single_document(self, document_id: str):
         content = b"".join(chunks)
         file_hash = hashlib.sha256(content).hexdigest()
 
-        # Skip if already downloaded (idempotent by hash)
-        if OpportunityDocument.objects.filter(file_hash=file_hash).exclude(pk=doc.pk).exists():
-            doc.processing_status = OpportunityDocument.ProcessingStatus.DOWNLOADED
+        # Dedup by hash: if another doc already has this content, copy its file
+        # reference instead of saving a new one, but still proceed to extraction.
+        existing = (
+            OpportunityDocument.objects
+            .filter(file_hash=file_hash)
+            .exclude(pk=doc.pk)
+            .exclude(file="")
+            .first()
+        )
+        if existing and existing.file:
+            doc.file = existing.file
             doc.file_hash = file_hash
-            doc.save(update_fields=["processing_status", "file_hash", "updated_at"])
-            logger.info("Document %s already exists (hash match)", document_id)
+            doc.file_size = existing.file_size
+            doc.mime_type = existing.mime_type or content_type.split(";")[0].strip()
+            doc.processing_status = OpportunityDocument.ProcessingStatus.DOWNLOADED
+            doc.save(update_fields=[
+                "file", "file_hash", "file_size", "mime_type",
+                "processing_status", "updated_at",
+            ])
+            logger.info("Document %s deduped from %s (hash match)", document_id, existing.pk)
+            extract_document_text.delay(str(doc.pk))
             return
 
         # Determine filename
@@ -180,8 +195,12 @@ def extract_document_text(self, document_id: str):
         # PostgreSQL TEXT fields cannot contain NUL bytes
         text = text.replace("\x00", "")
         doc.extracted_text = text
+        doc.file_name = (doc.file_name or "").replace("\x00", "")
         doc.processing_status = OpportunityDocument.ProcessingStatus.INDEXED
-        doc.save()
+        doc.save(update_fields=[
+            "extracted_text", "file_name", "page_count", "ocr_used",
+            "processing_status", "updated_at",
+        ])
 
         # Create chunks
         from apps.opportunities.models import DocumentChunk
