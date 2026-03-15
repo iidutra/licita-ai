@@ -166,8 +166,45 @@ class ComprasGovConnector(BaseConnector):
         return []
 
     def fetch_documents(self, opp: NormalizedOpportunity) -> list[dict]:
-        """Fetch document links."""
-        link = opp.link
-        if link:
-            return [{"url": link, "file_name": "edital.pdf", "doc_type": "edital"}]
-        return []
+        """Fetch real document files via PNCP API."""
+        raw = opp.raw_data
+        cnpj = raw.get("orgaoEntidadeCnpj", "")
+        ano = raw.get("anoCompraPncp", "") or raw.get("anoCompra", "")
+        seq = raw.get("sequencialCompraPncp", "") or raw.get("sequencialCompra", "")
+
+        if not all([cnpj, ano, seq]):
+            # Fallback: return portal link if we can't fetch real docs
+            if opp.link:
+                return [{"url": opp.link, "file_name": "edital.pdf", "doc_type": "edital"}]
+            return []
+
+        try:
+            pncp_client = httpx.Client(
+                base_url=settings.PNCP_API_BASE_URL.replace("/api/consulta", "/pncp-api"),
+                timeout=30.0,
+                follow_redirects=True,
+                headers={"Accept": "application/json", "User-Agent": "LicitaAI/1.0"},
+            )
+            resp = pncp_client.get(f"/v1/orgaos/{cnpj}/compras/{ano}/{seq}/arquivos")
+            resp.raise_for_status()
+            data = resp.json()
+            pncp_client.close()
+        except Exception:
+            logger.warning(
+                "Compras.gov: PNCP doc fetch failed for %s/%s/%s",
+                cnpj, ano, seq, exc_info=True,
+            )
+            if opp.link:
+                return [{"url": opp.link, "file_name": "edital.pdf", "doc_type": "edital"}]
+            return []
+
+        docs = data if isinstance(data, list) else data.get("data", [])
+        return [
+            {
+                "url": doc.get("uri", doc.get("url", "")),
+                "file_name": doc.get("nomeArquivo", ""),
+                "doc_type": doc.get("tipoDocumentoNome", ""),
+            }
+            for doc in docs
+            if doc.get("uri") or doc.get("url")
+        ]
