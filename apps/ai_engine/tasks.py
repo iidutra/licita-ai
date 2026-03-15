@@ -14,9 +14,9 @@ _DOC_POLL_DELAY = 10  # seconds between polls
 
 def _refresh_document_list(opp: Opportunity):
     """Fetch fresh document list from PNCP API and create any missing records."""
-    try:
-        from apps.connectors.pncp import PNCPConnector
+    import httpx
 
+    try:
         raw = opp.raw_data or {}
         cnpj = raw.get("orgaoEntidadeCnpj", "") or opp.entity_cnpj or ""
         ano = raw.get("anoCompraPncp", "") or raw.get("anoCompra", "")
@@ -25,22 +25,24 @@ def _refresh_document_list(opp: Opportunity):
         if not all([cnpj, ano, seq]):
             return
 
-        connector = PNCPConnector()
-        try:
-            fresh_docs = connector.fetch_documents_fresh(cnpj, str(ano), str(seq))
-        finally:
-            connector.close()
+        url = f"https://pncp.gov.br/pncp-api/v1/orgaos/{cnpj}/compras/{ano}/{seq}/arquivos"
+        resp = httpx.get(url, timeout=30, follow_redirects=True,
+                         headers={"Accept": "application/json", "User-Agent": "LicitaAI/1.0"})
+        resp.raise_for_status()
+        data = resp.json()
 
+        docs_list = data if isinstance(data, list) else data.get("data", [])
         existing_urls = set(opp.documents.values_list("original_url", flat=True))
         created = 0
-        for doc_data in fresh_docs:
-            url = doc_data.get("url", "")
-            if url and url not in existing_urls:
+
+        for doc in docs_list:
+            doc_url = doc.get("uri", doc.get("url", ""))
+            if doc_url and doc_url not in existing_urls:
                 OpportunityDocument.objects.create(
                     opportunity=opp,
-                    original_url=url,
-                    file_name=doc_data.get("file_name", "")[:500],
-                    doc_type=doc_data.get("doc_type", "")[:100],
+                    original_url=doc_url,
+                    file_name=(doc.get("nomeArquivo", "") or "")[:500],
+                    doc_type=(doc.get("tipoDocumentoNome", "") or "")[:100],
                 )
                 created += 1
 
