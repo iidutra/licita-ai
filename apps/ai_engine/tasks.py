@@ -12,9 +12,50 @@ _DOC_POLL_MAX = 40  # 40 * 10s = ~6-7 min max wait
 _DOC_POLL_DELAY = 10  # seconds between polls
 
 
+def _refresh_document_list(opp: Opportunity):
+    """Fetch fresh document list from PNCP API and create any missing records."""
+    try:
+        from apps.connectors.pncp import PNCPConnector
+
+        raw = opp.raw_data or {}
+        cnpj = raw.get("orgaoEntidadeCnpj", "") or opp.entity_cnpj or ""
+        ano = raw.get("anoCompraPncp", "") or raw.get("anoCompra", "")
+        seq = raw.get("sequencialCompraPncp", "") or raw.get("sequencialCompra", "")
+
+        if not all([cnpj, ano, seq]):
+            return
+
+        connector = PNCPConnector()
+        try:
+            fresh_docs = connector.fetch_documents_fresh(cnpj, str(ano), str(seq))
+        finally:
+            connector.close()
+
+        existing_urls = set(opp.documents.values_list("original_url", flat=True))
+        created = 0
+        for doc_data in fresh_docs:
+            url = doc_data.get("url", "")
+            if url and url not in existing_urls:
+                OpportunityDocument.objects.create(
+                    opportunity=opp,
+                    original_url=url,
+                    file_name=doc_data.get("file_name", "")[:500],
+                    doc_type=doc_data.get("doc_type", "")[:100],
+                )
+                created += 1
+
+        if created:
+            logger.info("Refreshed docs for %s: %d new documents found", opp.pk, created)
+    except Exception:
+        logger.warning("Failed to refresh document list for %s", opp.pk, exc_info=True)
+
+
 def _requeue_stuck_documents(opp: Opportunity) -> int:
     """Re-queue failed/pending/stuck docs. Returns total doc count."""
     from apps.opportunities.tasks import download_single_document, extract_document_text
+
+    # First, check PNCP API for any new documents not yet in the DB
+    _refresh_document_list(opp)
 
     docs = opp.documents.all()
     if not docs.exists():
