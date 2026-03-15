@@ -128,6 +128,8 @@ def extract_document_text(self, document_id: str):
         else:
             text = file_content.decode("utf-8", errors="replace")
 
+        # PostgreSQL TEXT fields cannot contain NUL bytes
+        text = text.replace("\x00", "")
         doc.extracted_text = text
         doc.processing_status = OpportunityDocument.ProcessingStatus.INDEXED
         doc.save()
