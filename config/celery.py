@@ -35,12 +35,6 @@ app.conf.beat_schedule = {
         "kwargs": {"days_back": 3},
         "options": {"queue": "ingest"},
     },
-    # Download pendente de anexos — a cada 2 horas
-    "download-pending-documents": {
-        "task": "apps.opportunities.tasks.download_pending_documents",
-        "schedule": crontab(minute=0, hour="*/2"),
-        "options": {"queue": "documents"},
-    },
     # Avisos de prazo (escala progressiva) — 2x/dia: 08:00 e 14:00 UTC (05:00 e 11:00 BRT)
     "check-deadlines": {
         "task": "apps.notifications.tasks.check_critical_deadlines",
