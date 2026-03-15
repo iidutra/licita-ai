@@ -173,9 +173,6 @@ class ComprasGovConnector(BaseConnector):
         seq = raw.get("sequencialCompraPncp", "") or raw.get("sequencialCompra", "")
 
         if not all([cnpj, ano, seq]):
-            # Fallback: return portal link if we can't fetch real docs
-            if opp.link:
-                return [{"url": opp.link, "file_name": "edital.pdf", "doc_type": "edital"}]
             return []
 
         try:
@@ -194,8 +191,6 @@ class ComprasGovConnector(BaseConnector):
                 "Compras.gov: PNCP doc fetch failed for %s/%s/%s",
                 cnpj, ano, seq, exc_info=True,
             )
-            if opp.link:
-                return [{"url": opp.link, "file_name": "edital.pdf", "doc_type": "edital"}]
             return []
 
         docs = data if isinstance(data, list) else data.get("data", [])
