@@ -1,6 +1,8 @@
 """Celery tasks — document download and processing."""
 import hashlib
+import io
 import logging
+import zipfile
 
 import httpx
 from celery import shared_task
@@ -8,6 +10,42 @@ from celery import shared_task
 from .models import Opportunity, OpportunityDocument
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_text_from_zip(zip_content: bytes) -> tuple[str, int, bool]:
+    """Extract text from PDFs/DOCXs inside a ZIP file."""
+    from apps.ai_engine.pipeline import extract_text_from_docx, extract_text_from_pdf
+
+    texts = []
+    total_pages = 0
+    ocr_used = False
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
+            for name in sorted(zf.namelist()):
+                lower = name.lower()
+                if lower.endswith("/") or lower.startswith("__MACOSX"):
+                    continue
+                try:
+                    data = zf.read(name)
+                except Exception:
+                    continue
+
+                if lower.endswith(".pdf"):
+                    text, pages, ocr = extract_text_from_pdf(data)
+                    if text.strip():
+                        texts.append(f"=== {name} ({pages} páginas) ===\n{text}")
+                        total_pages += pages
+                        ocr_used = ocr_used or ocr
+                elif lower.endswith(".docx"):
+                    text = extract_text_from_docx(data)
+                    if text.strip():
+                        texts.append(f"=== {name} ===\n{text}")
+    except zipfile.BadZipFile:
+        logger.warning("Invalid ZIP file")
+        return "", 0, False
+
+    return "\n\n".join(texts), total_pages, ocr_used
 
 
 @shared_task(bind=True, queue="documents", max_retries=3, default_retry_delay=60)
@@ -112,6 +150,7 @@ def extract_document_text(self, document_id: str):
     try:
         file_content = doc.file.read()
         mime = doc.mime_type.lower()
+        fname = (doc.file_name or "").lower()
 
         from apps.ai_engine.pipeline import (
             chunk_text,
@@ -119,11 +158,21 @@ def extract_document_text(self, document_id: str):
             extract_text_from_pdf,
         )
 
-        if "pdf" in mime or doc.file_name.lower().endswith(".pdf"):
+        # Handle ZIP files: extract PDFs inside and concatenate text
+        is_zip = (
+            "zip" in mime
+            or fname.endswith(".zip")
+            or file_content[:4] == b"PK\x03\x04"
+        )
+        if is_zip:
+            text, page_count, ocr_used = _extract_text_from_zip(file_content)
+            doc.page_count = page_count
+            doc.ocr_used = ocr_used
+        elif "pdf" in mime or fname.endswith(".pdf"):
             text, page_count, ocr_used = extract_text_from_pdf(file_content)
             doc.page_count = page_count
             doc.ocr_used = ocr_used
-        elif "word" in mime or doc.file_name.lower().endswith(".docx"):
+        elif "word" in mime or fname.endswith(".docx"):
             text = extract_text_from_docx(file_content)
         else:
             text = file_content.decode("utf-8", errors="replace")
