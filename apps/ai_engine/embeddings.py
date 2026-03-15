@@ -30,6 +30,7 @@ def generate_embedding(text: str) -> list[float]:
         model=f"models/{settings.GEMINI_EMBEDDING_MODEL}",
         content=text,
         task_type="retrieval_document",
+        request_options={"timeout": 30, "retry": None},
     )
     return result["embedding"]
 
@@ -50,6 +51,7 @@ def embed_chunks(chunks: list[DocumentChunk]) -> int:
             model=f"models/{settings.GEMINI_EMBEDDING_MODEL}",
             content=batch_texts,
             task_type="retrieval_document",
+            request_options={"timeout": 60, "retry": None},
         )
 
         for chunk, emb in zip(batch_chunks, result["embedding"]):
@@ -72,6 +74,7 @@ def search_similar_chunks(
         model=f"models/{settings.GEMINI_EMBEDDING_MODEL}",
         content=query,
         task_type="retrieval_query",
+        request_options={"timeout": 30, "retry": None},
     )
     query_embedding = result["embedding"]
 
