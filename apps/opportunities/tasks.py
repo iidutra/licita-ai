@@ -151,9 +151,12 @@ def extract_document_text(self, document_id: str):
             ))
         DocumentChunk.objects.bulk_create(chunk_objs)
 
-        # Generate embeddings
-        from apps.ai_engine.embeddings import embed_chunks
-        embed_chunks(list(doc.chunks.all()))
+        # Generate embeddings (non-fatal — AI can still use chunks without embeddings)
+        try:
+            from apps.ai_engine.embeddings import embed_chunks
+            embed_chunks(list(doc.chunks.all()))
+        except Exception:
+            logger.warning("Embedding failed for %s, chunks saved without vectors", doc.file_name, exc_info=True)
 
         logger.info("Indexed document %s: %d chunks", doc.file_name, len(chunk_objs))
 

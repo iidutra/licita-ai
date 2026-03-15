@@ -79,12 +79,27 @@ def run_extraction(opportunity: Opportunity) -> AISummary:
         "srp": opportunity.is_srp,
     }, ensure_ascii=False, indent=2)
 
-    # RAG: retrieve relevant chunks
-    chunks = search_similar_chunks(
-        query=opportunity.title,
-        opportunity_id=str(opportunity.pk),
-        top_k=15,
-    )
+    # RAG: retrieve relevant chunks via vector search or fallback to direct chunks
+    from apps.opportunities.models import DocumentChunk
+
+    chunks = []
+    try:
+        chunks = search_similar_chunks(
+            query=opportunity.title,
+            opportunity_id=str(opportunity.pk),
+            top_k=15,
+        )
+    except Exception:
+        logger.warning("Vector search failed for %s, falling back to direct chunks", opportunity.pk)
+
+    if not chunks:
+        # Fallback: get chunks directly from documents (no vector search)
+        chunks = list(
+            DocumentChunk.objects.filter(
+                document__opportunity=opportunity,
+            ).select_related("document").order_by("document", "chunk_index")[:30]
+        )
+
     chunks_text = "\n\n---\n\n".join(
         f"[Documento: {c.document.file_name}, Página: {c.page_number}]\n{c.content}"
         for c in chunks
