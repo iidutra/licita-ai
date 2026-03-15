@@ -41,7 +41,10 @@ def _call_llm(system: str, user: str, response_format: str = "json_object") -> t
     if response_format == "json_object":
         prompt += "\n\nIMPORTANTE: Responda APENAS com JSON válido, sem markdown ou texto adicional."
 
-    resp = model.generate_content(prompt)
+    resp = model.generate_content(
+        prompt,
+        request_options={"timeout": 120},
+    )
     content = resp.text
 
     tokens = 0
