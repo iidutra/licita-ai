@@ -1,5 +1,6 @@
 """Fast DB-level opportunity matching for a client (no AI calls)."""
-from django.db.models import Case, IntegerField, Q, Sum, Value, When
+from django.db.models import Case, F, IntegerField, Q, Value, When
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from apps.opportunities.models import Opportunity
@@ -9,12 +10,16 @@ def quick_match(client, limit: int = 10):
     """Score and return top opportunities for a client using DB-level filters.
 
     Scoring (0-100):
-      - Keyword overlap:  0-50 pts  (most important signal)
+      - Keyword overlap:  0-50 pts
       - Region match:     0-25 pts
       - Value in range:   0-15 pts
       - Recency:          0-10 pts
     """
     now = timezone.now()
+    keywords = (client.keywords or [])[:20]
+
+    if not keywords:
+        return Opportunity.objects.none()
 
     qs = Opportunity.objects.filter(
         status__in=["new", "analyzing", "eligible"],
@@ -28,30 +33,34 @@ def quick_match(client, limit: int = 10):
             Q(entity_uf__in=client.regions) | Q(entity_uf="") | Q(entity_uf__isnull=True),
         )
 
-    # --- Keyword score (0-50) ---
-    keywords = (client.keywords or [])[:20]
-    if keywords:
-        kw_cases = []
-        for kw in keywords:
-            kw_cases.append(
+    # --- Keyword score (0-50): count how many keywords match ---
+    n = len(keywords)
+    kw_cases = []
+    for kw in keywords:
+        kw_cases.append(
+            Case(
                 When(
                     Q(title__icontains=kw) | Q(description__icontains=kw),
                     then=Value(1),
-                )
+                ),
+                default=Value(0),
+                output_field=IntegerField(),
             )
-        kw_hits = Sum(Case(*kw_cases, default=Value(0), output_field=IntegerField()))
-        # Normalize: (hits / total_keywords) * 50
-        kw_score = Case(
-            *[
-                When(**{f"kw_hits__gte": i}, then=Value(min(50, int(i / len(keywords) * 50))))
-                for i in range(len(keywords), 0, -1)
-            ],
-            default=Value(0),
-            output_field=IntegerField(),
         )
-        qs = qs.annotate(kw_hits=kw_hits)
-    else:
-        qs = qs.annotate(kw_hits=Value(0, output_field=IntegerField()))
+    # Sum individual keyword matches, then scale to 0-50
+    kw_sum = kw_cases[0]
+    for expr in kw_cases[1:]:
+        kw_sum = kw_sum + expr
+
+    # kw_score = (kw_sum / n) * 50, but integer math
+    kw_score = Case(
+        *[
+            When(**{"kw_sum__gte": i}, then=Value(min(50, int(i / n * 50))))
+            for i in range(n, 0, -1)
+        ],
+        default=Value(0),
+        output_field=IntegerField(),
+    )
 
     # --- Value score (0-15) ---
     if client.max_value:
@@ -84,29 +93,17 @@ def quick_match(client, limit: int = 10):
         output_field=IntegerField(),
     )
 
-    # Build keyword score from kw_hits
-    if keywords:
-        n = len(keywords)
-        kw_score_expr = Case(
-            *[
-                When(kw_hits__gte=i, then=Value(min(50, int(i / n * 50))))
-                for i in range(n, 0, -1)
-            ],
-            default=Value(0),
-            output_field=IntegerField(),
-        )
-    else:
-        kw_score_expr = Value(0, output_field=IntegerField())
-
     qs = qs.annotate(
-        kw_score=kw_score_expr,
+        kw_sum=kw_sum,
+    ).filter(
+        kw_sum__gt=0,  # must match at least 1 keyword
+    ).annotate(
+        kw_score=kw_score,
         value_score=value_score,
         region_score=region_score,
         recency_score=recency_score,
     ).annotate(
-        quick_score=Sum("kw_score") + Sum("value_score") + Sum("region_score") + Sum("recency_score"),
-    ).filter(
-        quick_score__gt=0,
+        quick_score=F("kw_score") + F("value_score") + F("region_score") + F("recency_score"),
     ).order_by("-quick_score", "-published_at")[:limit]
 
     return qs
