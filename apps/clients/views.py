@@ -3,10 +3,11 @@ import logging
 import re
 
 import httpx
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from .forms import ClientDocumentForm, ClientForm
@@ -26,7 +27,9 @@ class ClientCreateView(LoginRequiredMixin, CreateView):
     model = Client
     form_class = ClientForm
     template_name = "clients/client_form.html"
-    success_url = reverse_lazy("clients:list")
+
+    def get_success_url(self):
+        return reverse("clients:detail", kwargs={"pk": self.object.pk})
 
 
 class ClientUpdateView(LoginRequiredMixin, UpdateView):
@@ -46,6 +49,11 @@ class ClientDetailView(LoginRequiredMixin, DetailView):
         ctx["documents"] = self.object.documents.all()
         ctx["doc_form"] = ClientDocumentForm()
         ctx["matches"] = self.object.matches.select_related("opportunity").order_by("-score")[:20]
+
+        # Quick matches: fast DB-level suggestions (always shown)
+        from apps.matching.quick_match import quick_match
+        ctx["quick_matches"] = quick_match(self.object, limit=10)
+
         return ctx
 
 
@@ -61,8 +69,20 @@ def add_client_document(request, pk):
     return redirect("clients:detail", pk=pk)
 
 
+def trigger_quick_match(request, pk, opp_pk):
+    """Trigger AI matching for a specific client-opportunity pair."""
+    if request.method != "POST":
+        return redirect("clients:detail", pk=pk)
+
+    client = get_object_or_404(Client, pk=pk)
+    from apps.matching.tasks import run_matching
+    run_matching.delay(str(opp_pk), str(client.pk))
+    messages.success(request, "Matching com IA enfileirado.")
+    return redirect("clients:detail", pk=pk)
+
+
 def cnpj_lookup(request):
-    """AJAX endpoint — busca dados de CNPJ via BrasilAPI."""
+    """AJAX endpoint — busca dados de CNPJ via BrasilAPI + Dados Abertos."""
     if not request.user.is_authenticated:
         return JsonResponse({"error": "Não autenticado"}, status=401)
 
@@ -88,7 +108,7 @@ def cnpj_lookup(request):
         logger.exception("CNPJ lookup failed for %s", digits)
         return JsonResponse({"error": "Erro ao consultar CNPJ"}, status=502)
 
-    return JsonResponse({
+    result = {
         "cnpj": data.get("cnpj", digits),
         "razao_social": data.get("razao_social", ""),
         "nome_fantasia": data.get("nome_fantasia", ""),
@@ -97,7 +117,25 @@ def cnpj_lookup(request):
         "uf": data.get("uf", ""),
         "municipio": data.get("municipio", ""),
         "situacao": data.get("descricao_situacao_cadastral", ""),
-        "atividade_principal": (
-            data.get("cnae_fiscal_descricao", "")
-        ),
-    })
+        "atividade_principal": data.get("cnae_fiscal_descricao", ""),
+    }
+
+    # Enrich with Dados Abertos (compras.gov.br) — optional, non-blocking
+    try:
+        gov_resp = httpx.get(
+            f"https://compras.dados.gov.br/fornecedores/v1/fornecedor/{digits}.json",
+            timeout=8,
+            follow_redirects=True,
+        )
+        if gov_resp.status_code == 200:
+            gov = gov_resp.json()
+            result["dados_abertos"] = {
+                "ativo": gov.get("ativo", None),
+                "porte_empresa": gov.get("porte_empresa", ""),
+                "ramo_negocio": gov.get("ramo_negocio", ""),
+                "natureza_juridica": gov.get("natureza_juridica", ""),
+            }
+    except Exception:
+        pass  # Enrichment is optional
+
+    return JsonResponse(result)

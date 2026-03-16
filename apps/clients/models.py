@@ -57,6 +57,12 @@ class Client(TimeStampedModel):
     )
     webhook_url = models.URLField("Webhook URL", blank=True)
 
+    # Dados Abertos (compras.gov.br) — enrichment
+    gov_supplier_active = models.BooleanField("Fornecedor ativo (gov)", null=True, blank=True)
+    gov_porte = models.CharField("Porte da empresa", max_length=50, blank=True)
+    gov_ramo_negocio = models.CharField("Ramo de negócio", max_length=300, blank=True)
+    gov_natureza_juridica = models.CharField("Natureza jurídica", max_length=200, blank=True)
+
     class Meta:
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"

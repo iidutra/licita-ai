@@ -12,4 +12,5 @@ urlpatterns = [
     path("<uuid:pk>/", views.ClientDetailView.as_view(), name="detail"),
     path("<uuid:pk>/edit/", views.ClientUpdateView.as_view(), name="edit"),
     path("<uuid:pk>/documents/add/", views.add_client_document, name="add_document"),
+    path("<uuid:pk>/match/<uuid:opp_pk>/", views.trigger_quick_match, name="trigger_match"),
 ]

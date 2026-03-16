@@ -117,11 +117,52 @@
     </div>
   </div>
 
-  <!-- Matches -->
+  <!-- Sugestoes Rapidas (DB-level quick match) -->
+  {% if quick_matches %}
+  <div class="col-12">
+    <div class="la-section">
+      <div class="la-section-title"><i class="bi bi-lightning"></i> Sugestoes Rapidas</div>
+      <p style="font-size:.78rem;color:#64748b;margin-bottom:.75rem;">Oportunidades compativeis com o perfil do cliente (baseado em palavras-chave, UF e valor).</p>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Oportunidade</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">UF</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Valor Est.</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Prazo</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;">Score</th>
+            <th style="font-size:.72rem;text-transform:uppercase;color:#64748b;font-weight:600;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for opp in quick_matches %}
+          <tr>
+            <td class="data-value"><a href="{% url 'opportunities:detail' opp.pk %}">{{ opp.title|truncatewords:10 }}</a></td>
+            <td class="data-value">{{ opp.entity_uf|default:"—" }}</td>
+            <td class="data-value">{% if opp.estimated_value %}R$ {{ opp.estimated_value|floatformat:0 }}{% else %}—{% endif %}</td>
+            <td class="data-value">{{ opp.deadline|date:"d/m/Y"|default:"—" }}</td>
+            <td class="data-value"><span class="{% if opp.quick_score >= 50 %}score-high{% elif opp.quick_score >= 25 %}score-mid{% else %}score-low{% endif %}">{{ opp.quick_score }}</span></td>
+            <td class="data-value">
+              <form method="post" action="{% url 'clients:trigger_match' client.pk opp.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary btn-sm" style="font-size:.68rem;padding:.15rem .4rem;">
+                  <i class="bi bi-robot"></i> Analisar
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Matches (AI-powered) -->
   {% if matches %}
   <div class="col-12">
     <div class="la-section">
-      <div class="la-section-title"><i class="bi bi-arrow-left-right"></i> Matches Recentes</div>
+      <div class="la-section-title"><i class="bi bi-arrow-left-right"></i> Matches IA</div>
       <table class="data-table">
         <thead>
           <tr>
