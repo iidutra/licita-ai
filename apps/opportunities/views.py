@@ -125,6 +125,19 @@ class OpportunityDetailView(LoginRequiredMixin, DetailView):
         ctx.update(self._build_dashboard_context(opp))
         ctx["ai_form"] = RunAIForm()
         ctx["matching_form"] = RunMatchingForm()
+
+        # Compliance check: if a client is selected via ?client=<uuid>, show doc gap analysis
+        from apps.clients.models import Client
+        client_id = self.request.GET.get("client")
+        if client_id:
+            try:
+                client = Client.objects.get(pk=client_id)
+                from apps.matching.compliance import check_compliance
+                ctx["compliance"] = check_compliance(opp, client)
+                ctx["compliance_client"] = client
+            except Client.DoesNotExist:
+                pass
+
         return ctx
 
 
